@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r5｜手機操作微調版</title>
+<title>作業點名簿＋ v1.0 Enhanced r6｜手機操作微調版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -320,7 +320,7 @@ button.overview-work-tag:focus-visible{outline:2px solid #2f80ed;outline-offset:
 .student-record-section{margin-top:12px}
 .student-record-section h4{margin:0 0 7px;font-size:14px}
 .student-record-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
-.student-record-table{width:100%;min-width:620px;border-collapse:separate;border-spacing:0}
+.student-record-table{width:100%;min-width:520px;border-collapse:separate;border-spacing:0}
 .student-record-table th,.student-record-table td{min-width:0;padding:7px 8px;font-size:12px;text-align:left}
 .student-record-table th{background:#f7f9fc;white-space:nowrap}
 .student-record-table td:first-child,.student-record-table th:first-child{position:static;background:inherit;min-width:100px}
@@ -333,7 +333,7 @@ button.overview-work-tag:focus-visible{outline:2px solid #2f80ed;outline-offset:
 @media(max-width:700px){
  .student-panel{margin:8px}
  .student-seat-btn{min-width:38px;height:38px}
- .student-record-table{min-width:560px}
+ .student-record-table{min-width:500px}
 }
 
 
@@ -605,10 +605,10 @@ html.mobile-ux .cat-list.editing .category-delete{white-space:nowrap!important}
   table-layout:fixed;
   width:100%;
 }
-#studentPanel .student-record-table col.student-col-category{width:24%}
-#studentPanel .student-record-table col.student-col-date{width:22%}
-#studentPanel .student-record-table col.student-col-progress{width:34%}
-#studentPanel .student-record-table col.student-col-status{width:20%}
+#studentPanel .student-record-table col.student-col-category{width:19%}
+#studentPanel .student-record-table col.student-col-date{width:20%}
+#studentPanel .student-record-table col.student-col-progress{width:27%}
+#studentPanel .student-record-table col.student-col-status{width:34%}
 #studentPanel .student-record-table th,
 #studentPanel .student-record-table td{box-sizing:border-box}
 #studentPanel .student-record-table td:nth-child(3){
@@ -854,9 +854,18 @@ html.mobile-ux #contactCollapseBtn{
   flex:0 0 auto!important;
 }
 </style>
+
+<style id="r6-mobile-touch-record-css">
+@media (max-width:760px){
+ html.mobile-ux .cat-drag-handle{touch-action:none!important;user-select:none;-webkit-user-select:none}
+ #studentPanel .student-record-table{min-width:500px!important}
+ #studentPanel .student-record-table th,#studentPanel .student-record-table td{padding:6px 5px!important;font-size:11px!important}
+ #studentPanel .student-record-table td:nth-child(4),#studentPanel .student-record-table th:nth-child(4){white-space:nowrap}
+}
+</style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r5</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r6</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
     <div>
@@ -1371,7 +1380,10 @@ function renderCats(){
    const handle=document.createElement('button');
    handle.type='button';handle.className='cat-drag-handle';handle.textContent='☰';
    handle.title='拖曳調整順序';handle.setAttribute('aria-label',`${c.name}：拖曳調整順序`);
-   handle.addEventListener('pointerdown',()=>row.draggable=true);
+   handle.addEventListener('pointerdown',e=>{
+     row.draggable=true;
+     if(e.pointerType==='touch'||e.pointerType==='pen')startCategoryTouchDrag(e,row,c.id,handle);
+   });
 
    const input=document.createElement('input');
    input.className='input category-name-edit';input.maxLength=30;input.value=c.name;
@@ -1487,6 +1499,41 @@ function updateCategoryAutoScroll(clientY){
    const max=Math.max(0,side.scrollHeight-side.clientHeight);
    side.scrollTop=Math.max(0,Math.min(max,side.scrollTop+categoryAutoScrollSpeed));
  },16);
+}
+let categoryTouchDrag=null;
+function startCategoryTouchDrag(e,row,catId,handle){
+ if(categoryTouchDrag)return;
+ e.preventDefault();e.stopPropagation();
+ categoryDragId=catId;
+ categoryTouchDrag={pointerId:e.pointerId,row,handle,lastY:e.clientY,targetId:'',after:false};
+ row.classList.add('dragging');
+ try{handle.setPointerCapture(e.pointerId)}catch{}
+ const move=ev=>{
+   if(!categoryTouchDrag||ev.pointerId!==categoryTouchDrag.pointerId)return;
+   ev.preventDefault();categoryTouchDrag.lastY=ev.clientY;updateCategoryAutoScroll(ev.clientY);
+   const el=document.elementFromPoint(ev.clientX,ev.clientY),target=el?.closest?.('.cat-edit-item');
+   const box=$('categoryList');box?.querySelectorAll('.cat-edit-item').forEach(x=>x.classList.remove('drag-over-before','drag-over-after'));
+   if(!target||target===row){categoryTouchDrag.targetId='';return}
+   const rect=target.getBoundingClientRect(),after=ev.clientY>rect.top+rect.height/2;
+   target.classList.add(after?'drag-over-after':'drag-over-before');
+   categoryTouchDrag.targetId=target.dataset.catId||'';categoryTouchDrag.after=after;
+ };
+ const end=ev=>{
+   if(!categoryTouchDrag||ev.pointerId!==categoryTouchDrag.pointerId)return;
+   ev.preventDefault();stopCategoryAutoScroll();
+   const d=categoryTouchDrag;categoryTouchDrag=null;
+   try{handle.releasePointerCapture(ev.pointerId)}catch{}
+   row.classList.remove('dragging');$('categoryList')?.querySelectorAll('.cat-edit-item').forEach(x=>x.classList.remove('drag-over-before','drag-over-after'));
+   categoryDragId='';
+   if(d.targetId&&d.targetId!==catId)moveCategoryRelative(catId,d.targetId,d.after);
+   else{
+     const box=$('categoryList'),rect=box?.getBoundingClientRect();
+     if(rect&&d.lastY>rect.bottom-24)moveCategoryToEnd(catId);
+   }
+ };
+ handle.addEventListener('pointermove',move,{passive:false});
+ handle.addEventListener('pointerup',end,{once:true});
+ handle.addEventListener('pointercancel',end,{once:true});
 }
 function moveCategoryBefore(dragId,targetId){
  moveCategoryRelative(dragId,targetId,false);
@@ -2947,6 +2994,12 @@ function enterSyncConflict(){
  setStatus('同步衝突待處理','這台裝置與雲端都有新修改。建議先按「安全合併」；若要整份取代，才使用「以這台裝置為準上傳」或「從雲端載入」。','wait');setButtons();
 }
 async function initFirebase(){
+ if(!navigator.onLine){
+   firebaseReady=false;
+   setStatus('離線・待同步',bridge?.isDirty?.()?'目前離線；尚未同步的變更仍保存在這台裝置，可繼續操作。恢復網路後再連接雲端。':'目前離線；本機資料可繼續使用。恢復網路後再連接雲端。','wait');
+   setButtons();
+   return;
+ }
  if(!FIREBASE_CONFIG||typeof FIREBASE_CONFIG!=='object'){
    setStatus('雲端未設定','尚未填入 Firebase Web 設定；目前所有資料仍只存在這個瀏覽器。');
    setButtons();return;
@@ -3191,6 +3244,7 @@ window.addEventListener('offline',()=>{
  setButtons();
 });
 window.addEventListener('online',()=>{
+ if(!firebaseReady){initFirebase();return}
  if(currentUser&&docRef&&!syncConflict&&bridge?.isDirty?.()){
    setStatus('重新檢查雲端','網路已恢復，正在確認離線期間雲端是否有其他更新…','wait');
    queuePush();
