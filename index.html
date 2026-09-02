@@ -1,0 +1,3186 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>作業點名簿＋ v1.0 Enhanced r3｜功能強化版</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
+button,input{font:inherit}button{cursor:pointer}.topbar{background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.brand{font-size:20px;font-weight:800;margin-right:auto}.small{font-size:12px;color:var(--muted)}
+.main{max-width:1500px;margin:auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:14px;padding:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px}.sidebar{padding:12px;align-self:start;position:sticky;top:14px}.workspace{display:flex;flex-direction:column;gap:14px}.section{padding:14px}.section-title{font-size:16px;font-weight:800;margin-bottom:10px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-weight:700;color:var(--text)}.btn.primary{background:#2f80ed;border-color:#2f80ed;color:#fff}.btn.danger{color:#d84343}
+.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px}.field.grow{flex:1}.field label{font-size:12px;color:var(--muted);font-weight:700}.input{min-height:40px;border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff}
+.side-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.cat-list{display:flex;flex-direction:column;gap:6px}.cat-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid transparent;border-radius:10px;background:#fff;transition:background .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease}
+.cat-item.active{background:#2678d8;border-color:#1f69be;color:#fff;box-shadow:0 0 0 2px rgba(38,120,216,.12)}
+.cat-item.active .cat-name{font-weight:850}
+.cat-name{font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-current-badge{flex:0 0 auto;font-size:10px;font-weight:850;line-height:1;padding:4px 6px;border-radius:999px;background:rgba(255,255,255,.2);color:#fff;white-space:nowrap}
+.cat-date{font-size:11px;color:var(--muted)}
+.cat-date.pending{color:#d84343;font-weight:800}
+.cat-item.active .cat-date{color:rgba(255,255,255,.88)}
+.cat-item.active .cat-date.pending{color:#fff2a8}
+.legend,.statusbar{display:flex;gap:8px;flex-wrap:wrap}.legend-item,.status-btn{display:inline-flex;align-items:center;gap:6px}.status-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-weight:750}.status-btn.active{outline:3px solid #cfe4ff}
+.dot{width:18px;height:18px;border-radius:50%;display:inline-block;border:3px solid transparent}.dot.red{background:var(--red)}.dot.blue{background:var(--blue)}.dot.yellow{background:var(--yellow)}.dot.green{background:var(--green)}.dot.orange{background:var(--orange)}.dot.ring{background:var(--yellow);border-color:var(--green)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,48px);gap:9px;margin-top:12px;justify-content:start}.num{width:48px;height:48px;border-radius:50%;border:2px solid #d9e0e7;background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;padding:0}.num.selected{outline:3px solid #b9d7ff;outline-offset:1px}
+.num.red{background:#ffe3e2;border-color:#f2aaa7;color:#b73835}.num.blue{background:#dbeeff;border-color:#aad4ff;color:#1f6fba}.num.yellow{background:#fff3bf;border-color:#efd568;color:#8d6f00}.num.green{background:#daf4e2;border-color:#9fd7b1;color:#237a3f}.num.orange{background:#ffe7d4;border-color:#f8bb86;color:#a95617}.num.ring{background:#fff3bf;border:4px solid var(--green);color:#8d6f00}
+.leave-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.leave-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px}.leave-chip.active{background:#ffe7d4;border-color:#f8bb86}.action-row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
+.summary{margin-top:12px;padding:12px;background:#f8fafc;border:1px solid var(--line);border-radius:12px}.summary h4{margin:0 0 6px}.summary-line{display:flex;align-items:center;gap:7px;margin:5px 0}.hidden{display:none!important}
+.table-wrap{overflow:auto;max-height:62vh;border:1px solid var(--line);border-radius:12px}table{border-collapse:separate;border-spacing:0;width:100%;min-width:760px;background:#fff}th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px;text-align:center;min-width:92px}th{background:#f8fafc;font-size:13px}thead th{position:sticky;top:0;z-index:3}th:first-child,td:first-child{position:sticky;left:0;z-index:4;min-width:66px;background:#fff}thead th:first-child{z-index:6;background:#f8fafc}.latest-col{background:#eef6ff!important}
+.cell-mark{display:inline-flex;width:26px;height:26px;border-radius:50%;position:relative;align-items:center;justify-content:center}
+.cell-mark.resolved::after{content:"OK";position:absolute;font-size:9px;font-weight:1000;letter-spacing:-.5px;color:#1f6f3a;transform:rotate(-14deg);line-height:1;text-shadow:0 0 2px #fff,0 0 2px #fff}
+.progress-tabs{display:flex;gap:6px;flex-wrap:wrap}.progress-tab{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 11px;font-weight:700}.progress-tab.active{background:#eaf3ff;border-color:#9fc8ff;color:#2468a9}
+.progress-editor{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-height:42px}.mini-input{width:78px;min-height:40px;border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center}.unit-select{min-height:40px;border:1px solid var(--line);border-radius:9px;padding:8px;background:#fff}
+.overview-note{margin-bottom:8px}.progress-cell{font-size:12px;line-height:1.15;white-space:normal}.progress-pages{display:flex;flex-direction:column;line-height:1.05}.progress-pages .wave{font-size:13px;color:var(--muted)}
+.cell-mark.red{background:#ffd9d8}.cell-mark.yellow{background:#ffefad}.cell-mark.green{background:#d8f2df}.cell-mark.orange{background:#ffe2c9}.cell-mark.ring{background:#ffefad;border:3px solid var(--green)}
+.modal-back{display:none;position:fixed;inset:0;background:rgba(0,0,0,.36);z-index:50;align-items:center;justify-content:center;padding:16px}.modal{width:min(460px,100%);background:#fff;border-radius:16px;padding:18px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+@media(max-width:980px){.main{grid-template-columns:210px minmax(0,1fr)}}
+@media(max-width:760px){.main{grid-template-columns:1fr;padding:8px}.sidebar{position:static}.cat-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:repeat(auto-fill,46px);gap:8px}.num{width:46px;height:46px}.field.grow{flex:1 1 100%}.statusbar{position:sticky;top:0;background:#fff;padding:8px 0;z-index:10}}
+
+.overview-panel{display:none;margin:12px 16px 0}
+.overview-panel.show{display:block}
+.overview-headline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.overview-table-wrap{overflow:auto;max-width:100%;border:1px solid var(--line);border-radius:10px}
+.overview-table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:12px}
+.overview-table th,.overview-table td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:2px 4px;text-align:center;min-width:38px;height:30px;white-space:nowrap}
+.overview-table th:last-child,.overview-table td:last-child{border-right:0}
+.overview-table tr:last-child td{border-bottom:0}
+.overview-table .seat-col{position:sticky;left:0;z-index:3;background:#fff;min-width:42px;font-weight:800}
+.overview-table thead .seat-col{z-index:5;background:#f7f9fc}
+.overview-table thead th{background:#f7f9fc;font-weight:800}
+.overview-table .cat-head{min-width:46px;max-width:72px;white-space:normal;line-height:1.05}
+.overview-table .date-head{font-size:10px;color:var(--muted);font-weight:600}
+.overview-table .cell-mark{width:18px;height:18px}
+.overview-table .cell-mark.resolved::after{font-size:7px;line-height:9px;padding:0 1px;border-width:1px}
+@media(max-width:700px){.overview-panel{margin:8px 8px 0}.overview-table th,.overview-table td{min-width:34px;height:28px;padding:1px 3px}.overview-table .cat-head{min-width:40px;max-width:56px;font-size:11px}.overview-table .seat-col{min-width:38px}}
+
+.all-ok-cell{padding:0!important;vertical-align:middle!important;background:rgba(248,250,252,.55)}
+.all-ok-stamp{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:22px;padding:0 5px;border:1.5px solid #8aa79a;border-radius:5px;color:#6f9181;font-size:11px;font-weight:900;letter-spacing:.5px;transform:rotate(-5deg);opacity:.72;background:rgba(255,255,255,.75)}
+
+.history-table-wrap{overflow-x:auto;overflow-y:visible;max-height:none;border:1px solid var(--line);border-radius:12px}
+.history-table{width:max-content;min-width:100%;table-layout:auto}
+.history-table th,.history-table td{padding:3px 5px;min-width:56px;height:32px}
+.history-table th:first-child,.history-table td:first-child{min-width:44px;width:44px}
+.history-table .cell-mark{width:21px;height:21px}
+.history-table .cell-mark.resolved::after{font-size:8px}
+.history-table th{font-size:11px;line-height:1.15}
+.history-table .progress-cell{font-size:10px}
+.history-table .progress-pages{font-size:10px}
+@media(max-width:700px){
+  .history-table th,.history-table td{min-width:50px;height:30px;padding:2px 4px}
+  .history-table th:first-child,.history-table td:first-child{min-width:40px;width:40px}
+  .history-table .cell-mark{width:19px;height:19px}
+}
+
+.brand-plus{display:inline-block;font-size:.58em;line-height:1;vertical-align:super;margin-left:1px;color:var(--blue);font-weight:900}
+.direct-progress{display:grid;grid-template-columns:auto minmax(250px,1fr) auto minmax(220px,1fr) auto minmax(260px,1.4fr);gap:7px 9px;align-items:center}
+.direct-progress .progress-label{font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap}
+.page-inline{display:flex;align-items:center;gap:5px;white-space:nowrap;min-width:0}
+.page-inline .mini-input{width:62px}
+.unit-inline{display:flex;align-items:center;gap:5px;min-width:0}
+.unit-inline .input{min-width:120px}
+.free-inline{min-width:0}
+.free-inline .input{width:100%}
+.progress-cell,.progress-pages{white-space:nowrap}
+.progress-pages{display:inline-flex;flex-direction:row;align-items:center;gap:2px;line-height:1.1}
+.progress-pages .wave{font-size:inherit;color:var(--muted)}
+.diag-head{position:sticky!important;left:0;min-width:54px!important;width:54px!important;height:52px;padding:0!important;background:
+linear-gradient(to top right,transparent 49%,var(--line) 49.5%,var(--line) 50.5%,transparent 51%),#f8fafc!important}
+.diag-head .diag-progress{position:absolute;right:4px;top:5px;font-size:10px;font-weight:800}
+.diag-head .diag-seat{position:absolute;left:4px;bottom:5px;font-size:10px;font-weight:800}
+.history-table th,.history-table td{min-width:52px}
+.history-table th:first-child,.history-table td:first-child{min-width:44px;width:44px}
+@media(max-width:900px){
+ .direct-progress{grid-template-columns:auto minmax(230px,1fr)}
+}
+@media(max-width:560px){
+ .direct-progress{grid-template-columns:1fr}
+ .direct-progress .progress-label{margin-top:3px}
+ .page-inline,.unit-inline{width:100%}
+ .free-inline{width:100%}
+}
+@container (max-width:90px){
+ .progress-pages{flex-direction:column}
+ .progress-pages .wave{writing-mode:vertical-rl;line-height:.8}
+}
+
+.brand{font-size:30px;letter-spacing:.5px;line-height:1.05}
+.brand-plus{font-size:.48em;margin-left:2px;transform:translateY(-.08em)}
+.category-manager{margin:8px 0 10px;padding:9px;border:1px solid var(--line);border-radius:10px;background:#f8fafc}
+.category-add-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.category-add-row .input{min-width:0}
+.category-edit-list{display:flex;flex-direction:column;gap:6px}
+.category-edit-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;align-items:center}
+.category-edit-row .input{min-width:0;padding:7px 8px;min-height:36px}
+.category-edit-row .btn{padding:6px 8px;min-height:36px;font-size:12px}
+.category-delete{color:#b33;background:#fff;border-color:#efcaca}
+@media(max-width:560px){.brand{font-size:25px}}
+
+.brand-wrap{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand-mark{width:38px;height:38px;border-radius:11px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;box-shadow:0 5px 14px rgba(77,163,255,.22)}
+.brand-block{display:flex;align-items:flex-end;gap:7px}
+.brand{font-size:31px;letter-spacing:.2px;line-height:1;font-weight:900;margin:0}
+.brand-plus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#eaf4ff;color:#2f83d7;font-size:12px;line-height:1;vertical-align:top;margin-left:3px;transform:translateY(-7px);font-weight:900}
+.brand-version{font-size:10px;color:var(--muted);padding-bottom:2px;white-space:nowrap}
+.category-manager-actions{display:flex;justify-content:flex-end;margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
+.category-edit-row{grid-template-columns:minmax(0,1fr) auto}
+.category-edit-row .category-delete{min-width:54px}
+@media(max-width:560px){
+ .brand-mark{width:34px;height:34px;border-radius:10px;font-size:21px}
+ .brand{font-size:25px}
+ .brand-version{display:none}
+}
+
+.brand-wrap{gap:7px}
+.brand-mark{width:24px;height:24px;border-radius:7px;font-size:15px;box-shadow:none}
+.brand{font-size:30px}
+@media(max-width:560px){
+ .brand-mark{width:22px;height:22px;border-radius:6px;font-size:14px}
+ .brand{font-size:25px}
+}
+
+.brand-wrap{gap:0}
+.brand-mark{display:none!important}
+.brand-plus{
+ width:22px;height:22px;
+ font-size:15px;
+ margin-left:4px;
+ transform:translateY(-8px);
+}
+@media(max-width:560px){
+ .brand-plus{width:20px;height:20px;font-size:14px;transform:translateY(-7px)}
+}
+.category-delete-confirm{display:none;grid-column:1/-1;padding:7px 8px;border-radius:8px;background:#fff4f3;border:1px solid #f2c6c2;font-size:12px}
+.category-edit-row.pending-delete .category-delete-confirm{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.category-confirm-actions{display:flex;gap:5px;flex-shrink:0}
+
+.cat-list.editing{gap:7px}
+.cat-edit-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center}
+.cat-edit-item .input{min-width:0;min-height:38px;padding:7px 9px}
+.cat-edit-item .category-delete{min-height:38px;padding:6px 9px}
+.cat-inline-confirm{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 8px;border:1px solid #f2c6c2;border-radius:8px;background:#fff4f3;font-size:12px}
+.cat-inline-confirm .actions{display:flex;gap:5px;flex-shrink:0}
+.cat-add-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center;margin-top:2px;padding-top:8px;border-top:1px dashed var(--line)}
+.cat-edit-actions{display:flex;justify-content:flex-end;margin-top:2px;padding-top:8px;border-top:1px solid var(--line)}
+@media(max-width:560px){
+ .cat-inline-confirm{align-items:flex-start;flex-direction:column}
+ .cat-inline-confirm .actions{align-self:flex-end}
+}
+
+#exportBtn,.import-label{cursor:pointer}
+.import-label input{cursor:pointer}
+
+/* 類別欄：固定在視窗內，類別過多時由左欄自己捲動 */
+.sidebar{
+ max-height:calc(100vh - 28px);
+ overflow-y:auto;
+ overscroll-behavior:contain;
+ scrollbar-gutter:stable;
+}
+@media(max-width:760px){
+ .main{grid-template-columns:1fr}
+ .sidebar{
+   position:static;
+   top:auto;
+   max-height:none;
+   overflow:visible;
+   scrollbar-gutter:auto;
+ }
+}
+
+.contact-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.contact-collapse-btn{padding:7px 10px;white-space:nowrap}
+#contactBody.collapsed{display:none}
+.leave-block{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.leave-title{font-weight:700}
+.leave-chip{cursor:pointer}
+
+.history-delete-confirm{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+ margin:0 0 10px;padding:10px 12px;border:1px solid #efcaca;border-radius:10px;background:#fff7f7;
+ font-size:13px;font-weight:700;
+}
+.history-delete-actions{display:flex;gap:7px;margin-left:auto}
+.history-delete-confirm .btn{padding:6px 9px;font-size:12px}
+
+.history-progress-box{container-type:inline-size;min-width:0}
+.cell-mark.partial-resolved::after{
+ content:attr(data-ok);position:absolute;font-size:7px;font-weight:1000;line-height:1;
+ color:#1f6f3a;background:rgba(255,255,255,.92);border-radius:4px;padding:1px 2px;
+ transform:translate(7px,-8px) rotate(-8deg);white-space:nowrap;
+}
+.import-confirm-box{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+ margin:0 0 12px;padding:10px 12px;border:1px solid #cbd8e6;border-radius:10px;background:#f6faff;
+ font-size:13px;font-weight:700;
+}
+.import-confirm-actions{display:flex;gap:7px;margin-left:auto}
+
+.cat-drag-handle{
+ width:34px;min-height:38px;padding:0;border:1px solid transparent;border-radius:8px;
+ background:transparent;color:#66727f;cursor:grab;font-size:20px;font-weight:900;line-height:1;
+ display:flex;align-items:center;justify-content:center;touch-action:none;
+}
+.cat-drag-handle:active{cursor:grabbing}
+.cat-edit-item.dragging{opacity:.48}
+.cat-edit-item.drag-over{border-top:3px solid var(--blue);padding-top:4px}
+.cat-order-buttons{display:flex;gap:3px}
+.cat-order-buttons .btn{min-width:32px;padding:6px 7px}
+@media(max-width:560px){
+ .cat-edit-item{grid-template-columns:auto minmax(0,1fr) auto}
+ .cat-drag-handle{width:32px}
+}
+
+.all-pass-group{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.exclude-leave-option{
+ display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:7px 9px;
+ border:1px solid var(--line);border-radius:10px;background:#fff;
+ font-size:12px;font-weight:700;color:var(--text);cursor:pointer;user-select:none;
+}
+.exclude-leave-option input{width:17px;height:17px;margin:0;accent-color:#2f80ed;cursor:pointer}
+@media(max-width:560px){
+ .all-pass-group{gap:5px}
+ .exclude-leave-option{min-height:38px;padding:6px 8px}
+}
+
+.cat-meta-row{grid-column:2/-1;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:1px 0 5px}
+.cat-meta-label{font-size:11px;font-weight:750;color:var(--muted)}
+.cat-kind-select{min-height:32px;padding:4px 7px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit;font-size:12px}
+.cat-overview-option{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;cursor:pointer;user-select:none}
+.cat-overview-option input{width:15px;height:15px;margin:0;accent-color:#2f80ed}
+.cat-kind-note{font-size:10px;color:var(--muted);line-height:1.35}
+
+.history-ok-edit-btn.active{background:#eaf7ee;border-color:#9fd7b1;color:#237a3f}
+.history-ok-edit-btn.has-pending{box-shadow:0 0 0 2px rgba(47,128,237,.16)}
+.history-table td.ok-editable.pending-toggle{box-shadow:inset 0 0 0 2px rgba(47,128,237,.42)}
+.history-table td.ok-editable{cursor:pointer;position:relative}
+.history-table td.ok-editable:hover{box-shadow:inset 0 0 0 2px rgba(47,128,237,.28)}
+.history-table td.ok-editable::before{
+ content:"點一下補登 OK";position:absolute;left:50%;bottom:1px;transform:translateX(-50%);
+ font-size:7px;color:var(--muted);white-space:nowrap;opacity:.78;pointer-events:none
+}
+@media(max-width:700px){
+ .history-table td.ok-editable::before{display:none}
+}
+
+.independent-badge{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:18px;height:18px;margin-left:4px;border:1px solid #9aa8b6;border-radius:50%;
+ background:#fff;color:#657382;font-size:10px;font-weight:900;line-height:1;
+ vertical-align:middle;box-sizing:border-box;flex:0 0 auto
+}
+.overview-debt-group{display:flex;align-items:center;justify-content:center;gap:3px;flex-wrap:wrap}
+.overview-debt{display:inline-flex;align-items:center;gap:1px;font-size:9px;font-weight:850;line-height:1}
+.overview-debt .cell-mark{width:13px!important;height:13px!important}
+.overview-debt .cell-mark.ring{border-width:2px}
+.overview-debt-count{min-width:7px;text-align:left}
+
+.overview-work-tags{display:flex;align-items:center;justify-content:center;gap:3px;flex-wrap:wrap;max-width:100%}
+.overview-work-tag{
+ display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 4px;
+ border:1px solid #aab5c0;border-radius:5px;background:#fff;color:#536170;
+ font-size:9px;font-weight:900;line-height:1;box-sizing:border-box;white-space:nowrap
+}
+.overview-work-tag.date{font-size:8px;min-width:32px}
+
+button.overview-work-tag{font-family:inherit;cursor:pointer}
+button.overview-work-tag:focus-visible{outline:2px solid #2f80ed;outline-offset:1px}
+
+.cloud-status-btn{display:inline-flex;align-items:center;gap:6px}
+.cloud-dot{width:9px;height:9px;border-radius:50%;background:#9aa7b5;box-shadow:0 0 0 2px rgba(154,167,181,.12)}
+.cloud-dot.ok{background:#2f9e62}.cloud-dot.wait{background:#e5a000}.cloud-dot.err{background:#d9485f}
+.cloud-panel{display:none;margin:10px 16px 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.cloud-panel.show{display:block}
+.cloud-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.cloud-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.cloud-device-option{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);font-weight:700}
+.cloud-device-option input{width:16px;height:16px}
+.cloud-sync-note{margin-top:8px;padding:8px 10px;border-radius:9px;background:#f7f9fc;border:1px solid var(--line)}
+.cloud-user{font-weight:800;color:var(--text)}
+@media(max-width:700px){
+ .topbar{flex-wrap:wrap}
+ .cloud-panel{margin:8px}
+ .cloud-actions .btn{flex:1 1 auto}
+}
+
+.record-choice-box{
+ margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;
+ background:#fff8e8;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap
+}
+.record-choice-box .actions{display:flex;gap:7px;flex-wrap:wrap}
+@media(max-width:650px){.record-choice-box .actions{width:100%}.record-choice-box .actions .btn{flex:1 1 auto}}
+
+.student-panel{display:none;margin:12px 16px 0}
+.student-panel.show{display:block}
+.student-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.student-seat-picker{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 12px}
+.student-seat-btn{min-width:40px;height:40px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-weight:800;color:var(--text)}
+.student-seat-btn.active{background:#2f80ed;border-color:#2f80ed;color:#fff}
+.student-record-empty{padding:14px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);background:#fafbfd}
+.student-record-section{margin-top:12px}
+.student-record-section h4{margin:0 0 7px;font-size:14px}
+.student-record-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.student-record-table{width:100%;min-width:620px;border-collapse:separate;border-spacing:0}
+.student-record-table th,.student-record-table td{min-width:0;padding:7px 8px;font-size:12px;text-align:left}
+.student-record-table th{background:#f7f9fc;white-space:nowrap}
+.student-record-table td:first-child,.student-record-table th:first-child{position:static;background:inherit;min-width:100px}
+.student-status-text{display:inline-flex;align-items:center;gap:5px;font-weight:800;white-space:nowrap}
+.student-status-text .dot{width:14px;height:14px;border-width:2px}
+.student-status-ok{margin-left:4px;font-size:10px;color:#237a3f;font-weight:900}
+.current-status-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.current-status-heading .small{font-weight:600}
+.overview-actions{display:flex;gap:7px;flex-wrap:wrap}
+@media(max-width:700px){
+ .student-panel{margin:8px}
+ .student-seat-btn{min-width:38px;height:38px}
+ .student-record-table{min-width:560px}
+}
+
+
+.history-edit-panel{display:none;margin:0 0 10px;padding:10px 12px;border:1px solid #b9d6f5;border-radius:10px;background:#f5faff}
+.history-edit-panel.show{display:block}
+.history-edit-top{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}
+.history-edit-top .field{min-width:220px;flex:1}
+.history-edit-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;align-items:center}
+.history-edit-status-btn{padding:6px 9px}
+.history-edit-status-btn .dot{width:14px;height:14px}
+.history-table td.record-editable{cursor:pointer;position:relative}
+.history-table td.record-editable:hover{box-shadow:inset 0 0 0 2px rgba(47,128,237,.24)}
+.history-table td.record-editable.record-selected{box-shadow:inset 0 0 0 3px rgba(47,128,237,.42);background:#f0f7ff!important}
+.history-edit-count{font-weight:800;color:#2468a9}
+.history-record-edit-btn.active{background:#eaf3ff;border-color:#9fc8ff;color:#2468a9}
+
+.history-main-edit-banner{display:none;margin:0 0 10px;padding:9px 11px;border:1px solid #9fc8ff;border-radius:10px;background:#eef6ff;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.history-main-edit-banner.show{display:flex}
+.history-main-edit-banner .title{font-weight:850;color:#2468a9}
+.history-main-edit-banner .actions{display:flex;gap:6px}
+
+.homework-entry-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.homework-entry-collapse-btn{padding:7px 10px;white-space:nowrap}
+#homeworkEntryBody.collapsed{display:none}
+.homework-entry-progress{padding-top:10px}
+.homework-entry-divider{border:0;border-top:1px solid var(--line);margin:14px 0}
+.unit-detail-select{min-height:40px;border:1px solid var(--line);border-radius:9px;padding:8px;background:#fff;max-width:190px}
+@media(max-width:560px){.unit-inline{flex-wrap:wrap}.unit-detail-select{width:100%;max-width:none}}
+
+.progress-validation{display:none;margin-top:7px;padding:8px 10px;border-radius:8px;background:#fff1f1;border:1px solid #efb4b4;color:#a32626;font-size:13px;font-weight:700}
+.progress-validation.show{display:block}
+
+/* v5.38：修正本次進度欄位擠壓重疊 */
+.direct-progress{
+  grid-template-columns:auto minmax(190px,auto) auto minmax(360px,1fr) !important;
+  align-items:center;
+  column-gap:10px;
+  row-gap:10px;
+}
+.direct-progress .unit-inline{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  width:max-content;
+  max-width:100%;
+}
+.direct-progress #unitType{flex:0 0 72px;min-width:72px}
+.direct-progress #unitNums{flex:0 0 150px;min-width:150px}
+.direct-progress #unitDetail{
+  flex:0 0 180px;
+  width:180px;
+  max-width:180px;
+  white-space:nowrap;
+}
+.direct-progress #freeProgress{
+  width:100%;
+  min-width:220px;
+}
+@media(max-width:1100px){
+  .direct-progress{
+    grid-template-columns:auto minmax(0,1fr) !important;
+  }
+  .direct-progress .unit-inline{
+    width:100%;
+    max-width:none;
+    flex-wrap:wrap;
+  }
+  .direct-progress #unitDetail{
+    flex:1 1 180px;
+    width:auto;
+    max-width:none;
+  }
+  .direct-progress #freeProgress{min-width:0}
+}
+@media(max-width:560px){
+  .direct-progress{grid-template-columns:1fr !important}
+  .direct-progress .progress-label{margin-top:4px}
+  .direct-progress .unit-inline{display:grid;grid-template-columns:72px 1fr;width:100%}
+  .direct-progress #unitType,.direct-progress #unitNums{min-width:0;width:100%;max-width:none}
+  .direct-progress #unitDetail{grid-column:1/-1;width:100%;max-width:none}
+}
+
+
+/* v5.38：手機專用 UX；桌機/平板維持原配置 */
+.mobile-only{display:none}
+@media(max-width:600px){
+ .mobile-only{display:flex}
+ .topbar{gap:6px}
+ #mobileMoreBtn{display:inline-flex;margin-left:auto}
+ #mobileMoreMenu{display:none;width:100%;gap:6px;flex-wrap:wrap;padding-top:4px}
+ #mobileMoreMenu.show{display:flex}
+ #mobileMoreMenu>.btn,#mobileMoreMenu>.import-label{flex:1 1 145px;text-align:center;justify-content:center}
+ .mobile-category-head{align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px}
+ .mobile-category-current{font-weight:800}
+ #catList.mobile-collapsed{display:none}
+ .progress-mobile-tabs{gap:6px;margin-bottom:9px}
+ .progress-mobile-tabs .btn{flex:1;padding:8px 5px}
+ .progress-mobile-tabs .btn.active{background:#eaf4ff;border-color:#8fc5f5;color:#1269aa;font-weight:800}
+ .direct-progress>.progress-label{display:none}
+ .direct-progress>.progress-mode-group{display:none !important}
+ .direct-progress>.progress-mode-group.active{display:flex !important}
+ .direct-progress{display:block !important}
+ .direct-progress>.progress-mode-group{width:100%;margin:0}
+ .direct-progress>.unit-inline.active{display:grid !important;grid-template-columns:72px 1fr;gap:6px}
+ .direct-progress>.unit-inline.active #unitDetail{grid-column:1/-1;width:100%;max-width:none}
+ .direct-progress>.page-inline.active{align-items:center;gap:6px}
+ .direct-progress>.free-inline.active{display:block !important}
+ .direct-progress>.free-inline.active input{width:100%}
+}
+
+
+.skip-pages-toggle{white-space:nowrap}.skip-pages-wrap{display:none;flex:1 1 100%;gap:4px;flex-direction:column;margin-top:6px}.skip-pages-wrap.show{display:flex}.skip-pages-wrap .hint{font-size:12px;color:var(--muted)}
+@media(max-width:600px){.direct-progress>.page-inline.active{flex-wrap:wrap}.direct-progress>.page-inline.active .skip-pages-wrap{width:100%}}
+
+
+/* v5.40：手機 Chrome 相容＋緊湊格距模式。
+   某些手機瀏覽器會回報較寬的 layout viewport，因此除了 max-width，
+   也由 JS 以觸控 + 實體螢幕短邊判定 phone，套用 html.mobile-ux。 */
+html.mobile-ux .mobile-only{display:flex}
+html.mobile-ux .main{grid-template-columns:1fr;padding:8px;gap:10px}
+html.mobile-ux .sidebar{position:static;top:auto;max-height:none;overflow:visible;scrollbar-gutter:auto;padding:10px}
+html.mobile-ux .topbar{gap:6px;padding:10px 12px}
+html.mobile-ux .brand{font-size:25px}
+html.mobile-ux .brand-plus{width:20px;height:20px;font-size:14px;transform:translateY(-7px)}
+html.mobile-ux .brand-version{display:none}
+html.mobile-ux #mobileMoreBtn{display:inline-flex;margin-left:auto}
+html.mobile-ux #mobileMoreMenu{display:none;width:100%;gap:6px;flex-wrap:wrap;padding-top:4px}
+html.mobile-ux #mobileMoreMenu.show{display:flex}
+html.mobile-ux #mobileMoreMenu>.btn,html.mobile-ux #mobileMoreMenu>.import-label{flex:1 1 145px;text-align:center;justify-content:center}
+html.mobile-ux .mobile-category-head{align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px}
+html.mobile-ux #catList.mobile-collapsed{display:none}
+html.mobile-ux .cat-list{display:grid;grid-template-columns:repeat(3,104px);gap:8px 9px;justify-content:start;align-items:stretch}
+html.mobile-ux .cat-item{width:104px;min-width:0;min-height:54px;padding:7px 6px;justify-content:center;align-content:center;flex-wrap:wrap;row-gap:3px;text-align:center}
+html.mobile-ux .cat-name{flex:1 0 100%;width:100%;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;line-height:1.25;text-align:center}
+html.mobile-ux .cat-date{font-size:10px;white-space:nowrap}
+html.mobile-ux .cat-current-badge{font-size:9px;padding:3px 4px}
+html.mobile-ux .independent-badge{margin-left:0}
+html.mobile-ux .grid{grid-template-columns:repeat(7,48px);gap:7px 8px;width:auto;justify-content:start}
+html.mobile-ux .num{width:48px;height:48px;aspect-ratio:auto;min-width:48px;justify-self:start;font-size:15px}
+html.mobile-ux .leave-row{display:grid;grid-template-columns:repeat(7,48px);gap:6px 8px;width:auto;justify-content:start}
+html.mobile-ux .leave-chip{width:48px;min-width:48px;padding:6px 0;text-align:center}
+html.mobile-ux .progress-mobile-tabs{gap:6px;margin-bottom:9px}
+html.mobile-ux .progress-mobile-tabs .btn{flex:1;padding:8px 5px}
+html.mobile-ux .progress-mobile-tabs .btn.active{background:#eaf4ff;border-color:#8fc5f5;color:#1269aa;font-weight:800}
+html.mobile-ux .direct-progress{display:block!important}
+html.mobile-ux .direct-progress>.progress-label{display:none}
+html.mobile-ux .direct-progress>.progress-mode-group{display:none!important;width:100%;margin:0}
+html.mobile-ux .direct-progress>.progress-mode-group.active{display:flex!important}
+html.mobile-ux .direct-progress>.unit-inline.active{display:grid!important;grid-template-columns:72px 1fr;gap:6px}
+html.mobile-ux .direct-progress>.unit-inline.active #unitDetail{grid-column:1/-1;width:100%;max-width:none}
+html.mobile-ux .direct-progress>.page-inline.active{align-items:center;gap:6px;flex-wrap:wrap}
+html.mobile-ux .direct-progress>.page-inline.active .skip-pages-wrap{width:100%}
+html.mobile-ux .direct-progress>.free-inline.active{display:block!important}
+html.mobile-ux .direct-progress>.free-inline.active input{width:100%}
+html.mobile-ux .field.grow{flex:1 1 100%}
+html.mobile-ux .statusbar{position:sticky;top:0;background:#fff;padding:8px 0;z-index:10}
+html.mobile-ux .history-table-wrap{overflow-x:auto;overflow-y:visible;max-width:100%}
+html.mobile-ux .history-table{width:max-content;min-width:100%}
+html.mobile-ux .history-table th,html.mobile-ux .history-table td{min-width:50px;height:30px;padding:2px 4px}
+html.mobile-ux .history-table th:first-child,html.mobile-ux .history-table td:first-child{min-width:40px;width:40px}
+html.mobile-ux .student-panel,html.mobile-ux .overview-panel,html.mobile-ux .cloud-panel{margin-left:8px;margin-right:8px}
+@media(max-width:390px){html.mobile-ux .cat-list{grid-template-columns:repeat(3,98px);gap:7px 7px}html.mobile-ux .cat-item{width:98px;min-height:52px;padding:7px 5px}html.mobile-ux .grid{grid-template-columns:repeat(7,44px);gap:6px 5px}html.mobile-ux .num{width:44px;height:44px;min-width:44px;font-size:14px}html.mobile-ux .leave-row{grid-template-columns:repeat(7,44px);gap:5px}html.mobile-ux .leave-chip{width:44px;min-width:44px}}
+
+/* v5.43：手機類別加寬、主要文字略放大，維持緊湊與手動收合。 */
+html.mobile-ux .mobile-category-head{
+  display:flex!important;
+  width:100%;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:3px 0 8px;
+}
+html.mobile-ux #mobileCategoryToggleBtn{
+  display:inline-flex!important;
+  flex:0 0 auto;
+  min-height:36px;
+  padding:6px 10px;
+  font-size:13px;
+  white-space:nowrap;
+}
+html.mobile-ux .mobile-category-current{
+  min-width:0;
+  font-size:15px;
+  line-height:1.25;
+  font-weight:850;
+}
+html.mobile-ux .cat-list{
+  grid-template-columns:repeat(3,102px)!important;
+  column-gap:7px!important;
+  row-gap:5px!important;
+  justify-content:start!important;
+  align-items:start!important;
+}
+html.mobile-ux .cat-item{
+  width:102px!important;
+  min-height:46px!important;
+  padding:5px 6px!important;
+  row-gap:2px!important;
+  line-height:1.15;
+}
+html.mobile-ux .cat-name{
+  font-size:15px!important;
+  line-height:1.18!important;
+  font-weight:800;
+}
+html.mobile-ux .cat-date{font-size:10px!important;line-height:1.05}
+html.mobile-ux .cat-current-badge{font-size:9px!important;padding:2px 5px!important}
+html.mobile-ux .independent-badge{width:17px;height:17px;font-size:9px}
+html.mobile-ux .section-title{font-size:18px!important;line-height:1.25}
+html.mobile-ux .side-head>b{font-size:16px!important}
+@media(max-width:390px){
+  html.mobile-ux .cat-list{grid-template-columns:repeat(3,96px)!important;column-gap:6px!important;row-gap:5px!important}
+  html.mobile-ux .cat-item{width:96px!important;min-height:45px!important;padding:5px!important}
+  html.mobile-ux .cat-name{font-size:14.5px!important}
+}
+
+
+
+/* v5.45：手機「編輯類別」模式改回單欄，避免 3 欄手機類別寬度把名稱輸入框擠到看不見。 */
+html.mobile-ux .cat-list.editing{
+  display:flex!important;
+  flex-direction:column!important;
+  width:100%!important;
+  gap:8px!important;
+}
+html.mobile-ux .cat-list.editing .cat-edit-item{
+  display:grid!important;
+  grid-template-columns:36px minmax(0,1fr) auto!important;
+  width:100%!important;
+  min-width:0!important;
+  gap:7px!important;
+  align-items:center!important;
+}
+html.mobile-ux .cat-list.editing .cat-edit-item .category-name-edit{
+  width:100%!important;
+  min-width:0!important;
+  font-size:16px!important;
+}
+html.mobile-ux .cat-list.editing .cat-meta-row{
+  grid-column:2 / -1!important;
+  width:100%!important;
+  padding:2px 0 4px!important;
+}
+html.mobile-ux .cat-list.editing .cat-inline-confirm{grid-column:1 / -1!important}
+html.mobile-ux .cat-list.editing .cat-drag-handle{width:36px!important}
+html.mobile-ux .cat-list.editing .category-delete{white-space:nowrap!important}
+
+</style>
+
+<style id="v1-enhanced-functional-css">
+/* =========================================================
+   作業點名簿＋ v1.0 Enhanced
+   僅補入功能所需樣式；維持 v1.0 原本視覺語言。
+   ========================================================= */
+
+/* 類別拖曳：上半部＝插入前、下半部＝插入後 */
+.cat-edit-item.drag-over-before{
+  border-top:3px solid var(--blue)!important;
+  padding-top:4px;
+}
+.cat-edit-item.drag-over-after{
+  border-bottom:3px solid var(--blue)!important;
+  padding-bottom:4px;
+}
+
+/* 學生個人紀錄：固定欄寬，切換學生時欄線不跳動 */
+#studentPanel .student-record-table{
+  table-layout:fixed;
+  width:100%;
+}
+#studentPanel .student-record-table col.student-col-category{width:24%}
+#studentPanel .student-record-table col.student-col-date{width:22%}
+#studentPanel .student-record-table col.student-col-progress{width:34%}
+#studentPanel .student-record-table col.student-col-status{width:20%}
+#studentPanel .student-record-table th,
+#studentPanel .student-record-table td{box-sizing:border-box}
+#studentPanel .student-record-table td:nth-child(3){
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+#studentPanel .student-record-table td:nth-child(4){overflow:hidden}
+
+/* 個人紀錄：排序切換、匯出操作，沿用 v1.0 白／灰／藍控制項 */
+#studentPanel .student-panel-head{gap:12px}
+#studentPanel .student-panel-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+#studentPanel .student-sort-switch{
+  display:inline-flex;
+  align-items:center;
+  padding:2px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#f8fafc;
+}
+#studentPanel .student-sort-btn{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  line-height:1;
+  padding:7px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+#studentPanel .student-sort-btn.active{
+  background:#eaf3ff;
+  color:#2468a9;
+  box-shadow:inset 0 0 0 1px #9fc8ff;
+}
+#studentPanel .student-sort-btn:focus-visible{
+  outline:2px solid #9fc8ff;
+  outline-offset:2px;
+}
+#studentPanel .student-record-priority-break td{
+  border-top:2px solid #b9c6d2!important;
+}
+
+/* 個人紀錄匯出 */
+#studentPanel .student-export-panel{
+  margin:10px 0 14px;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#f8fafc;
+}
+#studentPanel .student-export-panel[hidden]{display:none!important}
+#studentPanel .student-export-title{
+  font-size:14px;
+  font-weight:800;
+  color:var(--text);
+  margin-bottom:9px;
+}
+#studentPanel .student-export-options{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+#studentPanel .student-export-option{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 9px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#fff;
+  color:var(--text);
+  font-size:12px;
+  cursor:pointer;
+}
+#studentPanel .student-export-option input{accent-color:#2f80ed}
+#studentPanel .student-export-range{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) auto;
+  gap:8px;
+  align-items:end;
+  margin-top:10px;
+}
+#studentPanel .student-export-range .field{min-width:0}
+#studentPanel .student-export-range input:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+#studentPanel .student-export-help{
+  margin-top:6px;
+  color:var(--muted);
+}
+#studentPanel .student-export-error{
+  min-height:18px;
+  margin-top:5px;
+  color:#b33;
+  font-size:12px;
+  font-weight:700;
+}
+#studentPanel .student-export-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:7px;
+}
+
+/* 最新進度總覽：完整展開／固定雙列表頭 */
+#overviewPanel .overview-view-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:0;
+  padding:2px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#f8fafc;
+}
+#overviewPanel .overview-view-toggle .btn{
+  min-height:30px;
+  padding:5px 10px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  box-shadow:none;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+#overviewPanel .overview-view-toggle .btn.active{
+  background:#eaf3ff;
+  color:#2468a9;
+  box-shadow:inset 0 0 0 1px #9fc8ff;
+}
+
+/* 預設完整展開 */
+#overviewPanel:not(.overview-sticky-mode) .overview-table-wrap{
+  max-height:none;
+  overflow-x:auto;
+  overflow-y:visible;
+  overscroll-behavior:auto;
+}
+#overviewPanel:not(.overview-sticky-mode) .overview-table thead tr:first-child th,
+#overviewPanel:not(.overview-sticky-mode) .overview-table thead tr:nth-child(2) th{
+  position:static;
+  top:auto;
+}
+
+/* 固定表頭模式：縮短視窗，表格內捲動，兩列表頭都保持可見 */
+#overviewPanel.overview-sticky-mode .overview-table-wrap{
+  height:min(56vh,500px);
+  max-height:none;
+  overflow:auto;
+  overscroll-behavior:contain;
+  box-sizing:border-box;
+}
+/* 捲到底時保留可捲動尾端空間，讓最後一位學生可停在表頭下約 3 列的位置 */
+#overviewPanel .overview-scroll-tail{
+  display:none;
+}
+#overviewPanel.overview-sticky-mode .overview-scroll-tail{
+  display:block;
+  height:calc(100% - 150px);
+  min-height:220px;
+  max-height:350px;
+  pointer-events:none;
+}
+#overviewPanel.overview-sticky-mode .overview-table thead tr:first-child th{
+  position:sticky;
+  top:0;
+  z-index:12;
+  background:#f8fafc;
+}
+#overviewPanel.overview-sticky-mode .overview-table thead tr:nth-child(2) th{
+  position:sticky;
+  top:30px;
+  z-index:11;
+  background:#f8fafc;
+  box-shadow:0 1px 0 var(--line);
+}
+#overviewPanel.overview-sticky-mode .overview-table thead .seat-col{
+  z-index:14;
+}
+
+@media(max-width:760px){
+  #studentPanel .student-panel-actions{
+    width:100%;
+    justify-content:flex-start;
+  }
+  #studentPanel .student-sort-switch{
+    order:3;
+    width:100%;
+  }
+  #studentPanel .student-sort-btn{flex:1}
+  #studentPanel .student-export-range{grid-template-columns:1fr}
+  #studentPanel .student-export-actions{justify-content:stretch}
+  #studentPanel .student-export-actions .btn{flex:1}
+  #overviewPanel.overview-sticky-mode .overview-table-wrap{
+    height:min(62vh,440px);
+    max-height:none;
+  }
+  #overviewPanel.overview-sticky-mode .overview-scroll-tail{
+    height:calc(100% - 135px);
+    min-height:180px;
+    max-height:300px;
+  }
+  #overviewPanel .overview-view-toggle .btn{
+    font-size:11px;
+    padding:5px 8px;
+  }
+}
+</style>
+
+</head>
+<body>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r3</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<section id="cloudPanel" class="cloud-panel" aria-hidden="true">
+  <div class="cloud-panel-head">
+    <div>
+      <div class="section-title">☁ 雲端同步</div>
+      <div id="cloudStatusLong" class="small">尚未設定 Firebase；目前仍安全地使用本機儲存。</div>
+    </div>
+    <button id="cloudCloseBtn" class="btn" type="button">收起</button>
+  </div>
+  <div class="cloud-sync-note small">
+    正式啟用後，同一個 Google 帳號可在電腦、平板與手機共用同一份紀錄。第一次登入新裝置時，如果本機與雲端都有資料，系統不會自行覆蓋，會要求你選擇同步方向。
+  </div>
+  <div class="cloud-actions">
+    <label class="cloud-device-option" title="共用裝置建議不要勾選，關閉瀏覽器後需重新登入">
+      <input id="cloudPrivateDevice" type="checkbox">
+      <span>私人裝置，保持登入</span>
+    </label>
+    <button id="cloudSignInBtn" class="btn primary" type="button" disabled>Google 登入</button>
+    <button id="cloudSignOutBtn" class="btn" type="button" disabled>登出</button>
+    <button id="cloudMergeBtn" class="btn primary" type="button" disabled>安全合併</button>
+    <button id="cloudUploadBtn" class="btn" type="button" disabled>以這台裝置為準上傳</button>
+    <button id="cloudDownloadBtn" class="btn" type="button" disabled>從雲端載入</button>
+  </div>
+  <div id="cloudUserLine" class="small" style="margin-top:8px"></div>
+  <div class="small" style="margin-top:6px">安全提醒：Firebase Web 設定不是登入密碼，但仍請不要把任何密碼、服務帳戶金鑰或私密金鑰放進這個 HTML。</div>
+</section>
+
+
+<section id="studentPanel" class="card student-panel" aria-hidden="true">
+  <div class="student-panel-head">
+    <div>
+      <div class="section-title">學生個人作業紀錄</div>
+      <div class="small">連續作業只看最新一筆；獨立項目逐筆列出。沒有任何正式登記紀錄的類別不顯示。</div>
+    </div>
+    <div class="student-panel-actions">
+      <div class="student-sort-switch" role="group" aria-label="學生紀錄排列方式">
+        <button id="studentSortCategoryBtn" class="student-sort-btn active" type="button" aria-pressed="true">類別順序</button>
+        <button id="studentSortPendingBtn" class="student-sort-btn" type="button" aria-pressed="false">待處理優先</button>
+      </div>
+      <button id="studentExcelBtn" class="btn" type="button">匯出紀錄</button>
+      <button id="studentCloseBtn" class="btn" type="button">收起</button>
+    </div>
+  </div>
+  <div id="studentExportPanel" class="student-export-panel" hidden>
+    <div class="student-export-title">匯出學生個人紀錄 Excel</div>
+    <div class="student-export-options" role="radiogroup" aria-label="匯出範圍">
+      <label class="student-export-option"><input type="radio" name="studentExportScope" value="current" checked>目前學生</label>
+      <label class="student-export-option"><input type="radio" name="studentExportScope" value="range">指定座號</label>
+      <label class="student-export-option"><input type="radio" name="studentExportScope" value="all">全班</label>
+    </div>
+    <div class="student-export-range">
+      <div class="field grow">
+        <label for="studentExportRange">指定座號範圍</label>
+        <input id="studentExportRange" class="input" type="text" inputmode="text" maxlength="120" placeholder="例如：1-5,8,10-15" disabled autocomplete="off">
+      </div>
+      <button id="studentExportDoBtn" class="btn primary" type="button">開始匯出</button>
+    </div>
+    <div class="student-export-help small">可用逗號、頓號分隔，支援範圍；批次會輸出單一 Excel，包含「彙總」與每位學生各自的工作表。</div>
+    <div id="studentExportError" class="student-export-error" role="alert" aria-live="polite"></div>
+    <div class="student-export-actions"><button id="studentExportCancelBtn" class="btn" type="button">取消</button></div>
+  </div>
+  <div id="studentSeatPicker" class="student-seat-picker" aria-label="選擇學生座號"></div>
+  <div id="studentRecordBody"></div>
+</section>
+
+<section id="overviewPanel" class="card overview-panel" aria-hidden="true">
+  <div class="overview-headline">
+    <div>
+      <div class="section-title">作業最新進度總覽</div>
+      <div class="small">連續作業看最新一筆；獨立項目顯示尚未結清的作品提示與人次。</div>
+    </div>
+    <div class="overview-actions">
+      <div class="overview-view-toggle" role="group" aria-label="總覽顯示方式">
+        <button id="overviewExpandBtn" class="btn active" type="button" aria-pressed="true">完整展開</button>
+        <button id="overviewStickyBtn" class="btn" type="button" aria-pressed="false">固定表頭</button>
+      </div>
+      <button id="overviewExcelBtn" class="btn" type="button">匯出 Excel</button>
+      <button id="overviewCloseBtn" class="btn" type="button">收起</button>
+    </div>
+  </div>
+  <div class="overview-table-wrap">
+    <table class="overview-table">
+      <thead id="overviewHead"></thead>
+      <tbody id="overviewBody"></tbody>
+    </table>
+    <div class="overview-scroll-tail" aria-hidden="true"></div>
+  </div>
+</section>
+
+<div class="main">
+<aside class="card sidebar">
+  <div class="side-head"><b>類別</b><button id="categoryEditBtn" class="btn" type="button">✎ 編輯</button></div>
+  <div id="mobileCategoryHead" class="mobile-category-head mobile-only">
+<span class="mobile-category-current">目前：<span id="mobileCurrentCategory">—</span></span>
+<button id="mobileCategoryToggleBtn" class="btn" type="button" aria-expanded="true">收起類別 ▲</button>
+</div>
+<div id="catList" class="cat-list"></div>
+</aside>
+<main class="workspace">
+<section id="contactSection" class="card section">
+<div class="contact-section-head">
+  <div class="section-title" style="margin-bottom:0">今日聯絡簿</div>
+  <button id="contactCollapseBtn" class="btn contact-collapse-btn" type="button" aria-expanded="true">收起 ▲</button>
+</div>
+<div id="contactBody">
+  <div class="small" style="margin-top:10px">未登記座號預設為未交；直接點一次座號會快速標記為「已交」。若要改成其他狀態，可先選取座號，再點上方狀態按鈕。</div>
+  <div id="contactStatusbar" class="statusbar" style="margin-top:10px">
+    <button class="status-btn contact-status-btn active" type="button" data-contact-status="blue"><span class="dot blue"></span>已交</button>
+    <button class="status-btn contact-status-btn" type="button" data-contact-status="red"><span class="dot red"></span>未交</button>
+    <button class="status-btn contact-status-btn" type="button" data-contact-status="green"><span class="dot green"></span>未簽</button>
+    <button class="status-btn contact-status-btn" type="button" data-contact-status="yellow"><span class="dot yellow"></span>未完成</button>
+    <button class="status-btn contact-status-btn" type="button" data-contact-status="orange"><span class="dot orange"></span>請假</button>
+  </div>
+  <div class="row" style="margin-top:10px"><div class="field"><label>班級座號數</label><input id="studentCount" class="input" type="number" min="1" max="60" inputmode="numeric"></div><button id="applyCountBtn" class="btn primary" type="button">套用</button><span id="countFeedback" class="small"></span></div>
+  <div id="contactGrid" class="grid"></div>
+  <div class="leave-block">
+    <div class="small leave-title">請假座號</div>
+    <div id="leaveRow" class="leave-row"></div>
+  </div>
+  <div class="small" style="margin-top:10px">換日會自動開始新的聯絡簿；「清除此次紀錄」不會清除今天的請假座號。</div>
+  <div class="action-row">
+    <button id="clearContactBtn" class="btn danger" type="button" title="清除已交、未交、未簽、未完成等本次登記；保留今天的請假座號">清除此次紀錄</button>
+    <button id="finishContactBtn" class="btn primary" type="button">完成／更新聯絡簿統整</button>
+  </div>
+  <div id="contactSummary" class="summary hidden"></div>
+</div>
+</section>
+<section class="card section" id="homeworkEntrySection">
+<div class="homework-entry-head">
+  <div class="section-title" style="margin-bottom:0">作業登記</div>
+  <button id="homeworkEntryCollapseBtn" class="btn homework-entry-collapse-btn" type="button" aria-expanded="true">收起 ▲</button>
+</div>
+<div id="homeworkEntryBody">
+  <div class="row homework-entry-progress">
+    <div class="field grow">
+      <label>本次進度</label>
+      <div id="progressEditor" class="progress-editor direct-progress"></div><div id="progressValidationMsg" class="progress-validation" role="alert" aria-live="polite"></div>
+    </div>
+    <div class="field"><label>登記日期</label><input id="recordDate" class="input" type="date"></div>
+  </div>
+  <hr class="homework-entry-divider">
+  <div class="small">可一次選多個座號，再點狀態；套用後會自動取消選取。</div>
+  <div id="historyMainEditBanner" class="history-main-edit-banner" aria-hidden="true"></div>
+  <div id="homeworkStatusbar" class="statusbar" style="margin-top:10px"><button class="status-btn homework-status-btn active" type="button" data-status="blue"><span class="dot blue"></span>通過</button><button class="status-btn homework-status-btn" type="button" data-status="red"><span class="dot red"></span>未交／未寫</button><button class="status-btn homework-status-btn" type="button" data-status="green"><span class="dot green"></span>未簽</button><button class="status-btn homework-status-btn" type="button" data-status="ring"><span class="dot ring"></span>未訂簽</button><button class="status-btn homework-status-btn" type="button" data-status="yellow"><span class="dot yellow"></span>未訂正</button><button class="status-btn homework-status-btn" type="button" data-status="orange"><span class="dot orange"></span>請假</button></div>
+  <div id="studentGrid" class="grid"></div>
+  <div class="action-row">
+    <button id="clearHomeworkBtn" class="btn danger" type="button">清除目前登記</button>
+    <div class="all-pass-group">
+      <button id="markAllPassBtn" class="btn" type="button">全部通過</button>
+      <label class="exclude-leave-option" title="勾選後，按「全部通過」時會保留請假座號，不改成通過">
+        <input id="excludeLeaveOnAllPass" type="checkbox" checked>
+        <span>排除請假</span>
+      </label>
+    </div>
+    <button id="updateHomeworkBtn" class="btn primary" type="button">更新</button>
+  </div>
+  <div id="dailySummary" class="summary hidden"></div>
+</div>
+</section>
+<section class="card section"><div class="section-title">歷史紀錄</div><div class="small" style="margin-bottom:8px">按「編輯紀錄」會把該筆資料載入上方一般登記區，可用原本三種進度輸入方式與座號狀態按鈕修改；「補登 OK」則直接在歷史紀錄中批次處理。左右滑動時座號欄固定。</div><div class="history-table-wrap"><table class="history-table"><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div></section>
+</main></div>
+<script>
+"use strict";
+function localToday(){
+ const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+ return `${y}-${m}-${day}`;
+}
+let TODAY=localToday();
+function refreshToday(){
+ const now=localToday();
+ if(now!==TODAY)TODAY=now;
+ return TODAY;
+}
+const STORE='hwCheckerSecureV4';
+const DEFAULT_CATS=['國習','甲本','乙本','成語','圈詞','國練','數習','數練','作文','閱讀單','回條','分享報告'];
+const VALID_STATUS=new Set(['red','blue','yellow','green','ring','orange']);
+const SAFE_ID=/^[A-Za-z0-9_-]{1,60}$/;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const cleanText=(v,max=80)=>String(v??'').replace(/[\u0000-\u001F\u007F]/g,' ').trim().slice(0,max);
+const validDate=d=>{
+ const s=String(d||'');
+ const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return false;
+ const y=Number(m[1]),mo=Number(m[2]),day=Number(m[3]);
+ const dt=new Date(Date.UTC(y,mo-1,day));
+ return dt.getUTCFullYear()===y&&dt.getUTCMonth()===mo-1&&dt.getUTCDate()===day;
+};
+function defaultCategoryMeta(name){
+ const independent=['作文','閱讀單','回條','分享報告'].includes(name);
+ return {kind:independent?'independent':'continuous',showOverview:name!=='回條'};
+}
+function freshState(){return{studentCount:27,categories:DEFAULT_CATS.map((name,i)=>({id:'c'+i,name,...defaultCategoryMeta(name)})),currentCategory:'c0',drafts:{},history:[],contact:{date:refreshToday(),statuses:{},leave:[]},progress:{mode:'none',a:'',b:'',unit:'L',free:''}}}
+function sanitizeState(raw,keepDrafts=false){
+  const s=freshState(); if(!raw||typeof raw!=='object'||Array.isArray(raw))return s;
+  const count=Number(raw.studentCount); if(Number.isInteger(count)&&count>=1&&count<=60)s.studentCount=count;
+
+  const categoryIdMap=new Map();
+  if(Array.isArray(raw.categories)){
+    const seenIds=new Set(),seenNames=new Set(),cats=[];
+    let seq=0;
+    for(const c of raw.categories.slice(0,60)){
+      if(!c||typeof c!=='object')continue;
+      const oldId=String(c.id??'');
+      const name=cleanText(c.name,30);
+      if(!name)continue;
+      const norm=name.trim().replace(/\s+/g,' ').toLocaleLowerCase('zh-Hant');
+      if(seenNames.has(norm))continue;
+      let id=SAFE_ID.test(oldId)?oldId:'';
+      while(!id||seenIds.has(id)){id=`c_import_${seq++}`;}
+      const defaults=defaultCategoryMeta(name);
+      const kind=['continuous','independent'].includes(c.kind)?c.kind:defaults.kind;
+      const showOverview=typeof c.showOverview==='boolean'?c.showOverview:defaults.showOverview;
+      seenIds.add(id);seenNames.add(norm);cats.push({id,name,kind,showOverview});categoryIdMap.set(oldId,id);
+    }
+    if(cats.length)s.categories=cats;
+  }
+
+  const rawCurrent=String(raw.currentCategory??'');
+  const mappedCurrent=categoryIdMap.get(rawCurrent)||rawCurrent;
+  if(s.categories.some(c=>c.id===mappedCurrent))s.currentCategory=mappedCurrent;
+  else s.currentCategory=s.categories[0].id;
+
+  s.history=[];
+  const seenHistoryIds=new Set();
+  if(Array.isArray(raw.history)){
+    let histSeq=0;
+    for(const h of raw.history.slice(0,1500)){
+      if(!h||typeof h!=='object'||!validDate(h.date))continue;
+      const oldCatId=String(h.catId??'');
+      const catId=categoryIdMap.get(oldCatId)||oldCatId;
+      if(!s.categories.some(c=>c.id===catId))continue;
+
+      const statuses={},resolved={},resolvedParts={},manualResolved={};
+      if(h.statuses&&typeof h.statuses==='object')for(const [k,v] of Object.entries(h.statuses)){
+        const n=Number(k);if(Number.isInteger(n)&&n>=1&&n<=60&&VALID_STATUS.has(v))statuses[n]=v
+      }
+      if(h.resolved&&typeof h.resolved==='object')for(const [k,v] of Object.entries(h.resolved)){
+        const n=Number(k);if(Number.isInteger(n)&&n>=1&&n<=60&&v===true)resolved[n]=true
+      }
+      if(h.resolvedParts&&typeof h.resolvedParts==='object')for(const [k,v] of Object.entries(h.resolvedParts)){
+        const n=Number(k);if(!Number.isInteger(n)||n<1||n>60||!v||typeof v!=='object')continue;
+        const part={};
+        if(v.missing===true)part.missing=true;
+        if(v.correction===true)part.correction=true;
+        if(v.signature===true)part.signature=true;
+        if(Object.keys(part).length)resolvedParts[n]=part;
+      }
+      if(h.manualResolved&&typeof h.manualResolved==='object')for(const [k,v] of Object.entries(h.manualResolved)){
+        const n=Number(k);if(Number.isInteger(n)&&n>=1&&n<=60&&v===true)manualResolved[n]=true;
+      }
+      const catMeta=s.categories.find(c=>c.id===catId);
+      if(catMeta?.kind==='independent'&&!Object.keys(manualResolved).length){
+        for(const [k,v] of Object.entries(resolved))if(v===true)manualResolved[k]=true;
+      }
+
+      const rawHistId=String(h.id??'');
+      let id=SAFE_ID.test(rawHistId)?rawHistId:'';
+      while(!id||seenHistoryIds.has(id)){id=`h_import_${Date.now()}_${histSeq++}`;}
+      seenHistoryIds.add(id);
+
+      s.history.push({
+        id,catId,date:h.date,content:cleanText(h.content,100),workLabel:cleanText(h.workLabel,6),
+        progressType:['pages','unit','free','none'].includes(h.progressType)?h.progressType:'free',
+        statuses,resolved,resolvedParts,manualResolved,updated:Number.isFinite(Number(h.updated))?Number(h.updated):Date.now()
+      });
+    }
+  }
+
+  s.drafts={};
+  if(keepDrafts&&raw.drafts&&typeof raw.drafts==='object'&&!Array.isArray(raw.drafts)){
+    let draftCount=0;
+    for(const [rawKey,rawDraft] of Object.entries(raw.drafts)){
+      if(draftCount>=120||!rawDraft||typeof rawDraft!=='object'||Array.isArray(rawDraft))continue;
+      const parts=String(rawKey).split('|');
+      if(parts.length<2)continue;
+      const oldCatId=parts[0],catId=categoryIdMap.get(oldCatId)||oldCatId,date=parts[1];
+      if(!s.categories.some(c=>c.id===catId)||!validDate(date))continue;
+      // 新版草稿 key 固定為「類別|日期」；舊版多出的進度部分合併進同一天。
+      const key=`${catId}|${date}`,safeDraft=s.drafts[key]||{};
+      for(const [seat,status] of Object.entries(rawDraft)){
+        const n=Number(seat);
+        if(Number.isInteger(n)&&n>=1&&n<=60&&VALID_STATUS.has(status))safeDraft[n]=status;
+      }
+      s.drafts[key]=safeDraft;draftCount++;
+    }
+  }
+  // 匯入備份時 keepDrafts=false：不接收臨時草稿，避免未完成資料覆蓋目前工作。
+  if(raw.contact&&typeof raw.contact==='object'){
+    s.contact={date:validDate(raw.contact.date)?raw.contact.date:refreshToday(),statuses:{},leave:[]};
+    if(raw.contact.statuses&&typeof raw.contact.statuses==='object')for(const [k,v] of Object.entries(raw.contact.statuses)){
+      const n=Number(k);if(Number.isInteger(n)&&n>=1&&n<=60&&['red','blue','yellow','green'].includes(v))s.contact.statuses[n]=v
+    }
+    if(Array.isArray(raw.contact.leave))s.contact.leave=[...new Set(raw.contact.leave.map(Number).filter(n=>Number.isInteger(n)&&n>=1&&n<=60))];
+  }
+  return s;
+}
+const CLOUD_DIRTY_KEY='hwCheckerCloudDirtyV1';
+let state;try{state=sanitizeState(JSON.parse(localStorage.getItem(STORE)||'null'),true)}catch{state=freshState()}
+let selectedStudents=new Set(),selectedStatus='blue',selectedContactStudents=new Set(),selectedContactStatus='blue',progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
+function saveLocalOnly(){localStorage.setItem(STORE,JSON.stringify(state))}
+function save(){
+ saveLocalOnly();
+ localStorage.setItem(CLOUD_DIRTY_KEY,'1');
+ if(window.hwCloud&&typeof window.hwCloud.queuePush==='function')window.hwCloud.queuePush();
+}
+window.hwCloudBridge={
+ getState:()=>sanitizeState(state,false),
+ applyRemote:(raw)=>{
+   const localDrafts=(state&&state.drafts&&typeof state.drafts==='object')?state.drafts:{};
+   const remote=sanitizeState(raw,false);
+   state=sanitizeState({...remote,drafts:localDrafts},true);
+   recomputeAllContinuousResolutions();
+   selectedStudents.clear();selectedContactStudents.clear();
+   saveLocalOnly();localStorage.setItem(CLOUD_DIRTY_KEY,'0');
+   renderAll();
+ },
+ markSynced:()=>localStorage.setItem(CLOUD_DIRTY_KEY,'0'),
+ isDirty:()=>localStorage.getItem(CLOUD_DIRTY_KEY)==='1',
+ hasLocalData:()=>!!localStorage.getItem(STORE)
+};
+function currentCat(){return state.categories.find(c=>c.id===state.currentCategory)||state.categories[0]}
+function readProgressValues(){
+ const paEl=$('pA'),pbEl=$('pB'),skipEl=$('skipPages'),unitEl=$('unitNums'),typeEl=$('unitType'),detailEl=$('unitDetail'),freeEl=$('freeProgress');
+ const pa=String(paEl?paEl.value:progress.a||'').replace(/\D/g,'').slice(0,4);
+ const pb=String(pbEl?pbEl.value:progress.b||'').replace(/\D/g,'').slice(0,4);
+ const skipRaw=String(skipEl?skipEl.value:progress.skipPages||'').replace(/[^0-9,，、\-～]/g,'').replace(/，/g,',').slice(0,60);
+ const unitRaw=String(unitEl?unitEl.value:progress.unitNums||'').replace(/[^0-9,，、\-～]/g,'').replace(/，/g,',').slice(0,30);
+ const unit=['L','Ch','U'].includes(typeEl?typeEl.value:progress.unit)?(typeEl?typeEl.value:progress.unit):'L';
+ const unitDetail=['','生字','語詞＋綜合練習'].includes(detailEl?detailEl.value:progress.unitDetail)?(detailEl?detailEl.value:progress.unitDetail):'';
+ const free=cleanText(freeEl?freeEl.value:progress.free||'',100);
+ return {pa,pb,skipRaw,unitRaw,unit,unitDetail,free};
+}
+function buildContent(){
+ const {pa,pb,skipRaw,unitRaw,unit,unitDetail,free}=readProgressValues();
+ const used=(pa||pb||skipRaw?1:0)+(unitRaw?1:0)+(free?1:0);
+ if(used>1)return {error:'multi'};
+ if(pa||pb||skipRaw){
+   if(!pa)return {error:'pageStart'};
+   const start=Number(pa),end=pb?Number(pb):start;
+   if(start>end)return {error:'range'};
+   const segments=[{start,end,label:start===end?`P.${start}`:`P.${start}～P.${end}`}];
+   if(skipRaw){
+     for(const token of skipRaw.split(/[、,]/).map(x=>x.trim()).filter(Boolean)){
+       let s,e;
+       if(/[-～]/.test(token)){
+         const pair=token.split(/[-～]/);
+         if(pair.length!==2||!/^\d+$/.test(pair[0])||!/^\d+$/.test(pair[1]))return {error:'skipFormat'};
+         s=Number(pair[0]);e=Number(pair[1]);if(s>e)return {error:'skipRange'};
+       }else{if(!/^\d+$/.test(token))return {error:'skipFormat'};s=e=Number(token)}
+       if(segments.some(seg=>Math.max(seg.start,s)<=Math.min(seg.end,e)))return {error:'pageOverlap',detail:s===e?`P.${s}`:`P.${s}～P.${e}`};
+       segments.push({start:s,end:e,label:s===e?`P.${s}`:`P.${s}～P.${e}`});
+     }
+   }
+   return {content:segments.map(x=>x.label).join('、'),type:'pages'};
+ }
+ if(unitRaw){
+   const parts=[];
+   for(const part of unitRaw.split(/[、,]/).filter(Boolean)){
+     if(/[-～]/.test(part)){
+       const pair=part.split(/[-～]/);
+       if(pair.length!==2)return {error:'range'};
+       const[x,y]=pair.map(x=>x.replace(/\D/g,''));
+       if(!x||!y||Number(x)>Number(y))return {error:'range'};
+       parts.push(`${unit}${Number(x)}～${unit}${Number(y)}`);
+     }else{
+       const n=part.replace(/\D/g,''); if(n)parts.push(`${unit}${Number(n)}`);
+       else return {error:'unit'};
+     }
+   }
+   return {content:parts.join('、')+(unitDetail?' '+unitDetail:''),type:'unit'};
+ }
+ if(free)return {content:free,type:'free'};
+ return {content:'',type:'none'};
+}
+
+function progressErrorText(result=buildContent()){
+ if(result?.error==='multi')return '頁數、單元、自由輸入只能擇一填寫，請清除其中一種後再儲存。';
+ if(result?.error==='pageStart')return '已填寫迄頁時，也要填寫起始頁。';
+ if(result?.error==='pageOverlap')return `頁數重複：${result.detail||'輸入範圍'} 已和前面的頁數重疊，請確認。`;
+ if(result?.error==='skipRange')return '跳頁範圍的起始頁不可大於結束頁。';
+ if(result?.error==='skipFormat')return '跳頁格式不正確，可輸入例如「18、20～22」或「18,20-22」。';
+ if(result?.error==='range')return '單元或頁數範圍格式不正確，且起始數字不可大於結束數字。';
+ if(result?.error==='unit')return '單元請輸入數字，可用「、」或「,」分隔，也可用「～」或「-」輸入範圍。';
+ return '';
+}
+function renderProgressValidation(){
+ const box=$('progressValidationMsg');if(!box)return true;
+ const msg=progressErrorText();
+ box.textContent=msg;
+ box.classList.toggle('show',!!msg);
+ return !msg;
+}
+function draftKey(){return `${currentCat().id}|${$('recordDate').value||TODAY}`}
+function getDraft(){
+ if(historyEditId&&historyEditDraft)return historyEditDraft;
+ const k=draftKey();
+ if(!state.drafts[k]){
+   const prefix=k+'|',legacyKeys=Object.keys(state.drafts).filter(x=>x.startsWith(prefix)),merged={};
+   for(const oldKey of legacyKeys){
+     const old=state.drafts[oldKey];
+     if(old&&typeof old==='object')Object.assign(merged,old);
+     delete state.drafts[oldKey];
+   }
+   state.drafts[k]=merged;
+   if(legacyKeys.length)save();
+ }
+ return state.drafts[k];
+}
+function compareHistory(a,b){
+ const byDate=String(b.date).localeCompare(String(a.date));
+ return byDate||Number(b.updated||0)-Number(a.updated||0);
+}
+function latestRecord(catId){return state.history.filter(h=>h.catId===catId).sort(compareHistory)[0]||null}
+function recordHasPending(h){if(!h)return false;for(let n=1;n<=state.studentCount;n++){const st=h.statuses[n];if(['red','yellow','green','ring'].includes(st)&&!h.resolved?.[n])return true}return false}
+function fmtDate(d){if(!d)return'';const[,m,day]=d.split('-');return`${Number(m)}/${Number(day)}`}
+
+const MOBILE_UX_MAX=600;
+let mobileCategoriesCollapsed=false;
+function isMobileUX(){
+ const narrowViewport=window.matchMedia(`(max-width:${MOBILE_UX_MAX}px)`).matches;
+ const coarsePointer=window.matchMedia('(pointer:coarse)').matches||window.matchMedia('(any-pointer:coarse)').matches;
+ const shortScreen=Math.min(Number(screen.width)||9999,Number(screen.height)||9999)<=600;
+ return narrowViewport||(coarsePointer&&shortScreen);
+}
+function syncMobileUXClass(){document.documentElement.classList.toggle('mobile-ux',isMobileUX())}
+function updateMobileCategoryUI(){
+ const name=$('mobileCurrentCategory');if(name)name.textContent=currentCat()?.name||'—';
+ const list=$('catList'),btn=$('mobileCategoryToggleBtn');if(!list||!btn)return;
+ list.classList.toggle('mobile-collapsed',isMobileUX()&&mobileCategoriesCollapsed);
+ btn.textContent=mobileCategoriesCollapsed?'更換類別 ▼':'收起類別 ▲';
+ btn.setAttribute('aria-expanded',mobileCategoriesCollapsed?'false':'true');
+}
+function setupMobileTopbar(){
+ const menu=$('mobileMoreMenu'),more=$('mobileMoreBtn');if(!menu||!more)return;
+ const ids=['exportBtn','studentToggleBtn','overviewToggleBtn'];
+ const importLabel=document.querySelector('.import-label');
+ const header=more.parentElement;
+ if(isMobileUX()){
+   ids.forEach(id=>{const el=$(id);if(el&&el.parentElement!==menu)menu.appendChild(el)});
+   if(importLabel&&importLabel.parentElement!==menu)menu.appendChild(importLabel);
+ }else{
+   const before=more;
+   const ordered=[$('exportBtn'),importLabel,$('studentToggleBtn'),$('overviewToggleBtn')].filter(Boolean);
+   ordered.forEach(el=>{if(el.parentElement===menu)header.insertBefore(el,before)});
+   menu.classList.remove('show');more.textContent='更多 ▾';more.setAttribute('aria-expanded','false');
+ }
+}
+function renderAll(){refreshToday();$('studentCount').value=state.studentCount;if(!$('recordDate').value)$('recordDate').value=TODAY;if(selectedStudentSeat>state.studentCount)selectedStudentSeat=state.studentCount;renderCats();updateMobileCategoryUI();renderProgress();renderHistoryMainEditBanner();renderContact();renderStudentGrid();renderOverview();renderStudentRecord();renderTable();renderCurrentCategorySummary()}
+let categoryEditMode=false;
+let selectedStudentSeat=1;
+let studentRecordSortMode='category';
+let historyOkEditId='';
+let historyOkPending=new Set();
+let historyEditId='';
+let historyEditDraft=null;
+let historyEditOriginalManual={};
+let categoryDragId='';
+function normalizeCategoryName(v){
+ return cleanText(v,30).trim().replace(/\s+/g,' ').toLocaleLowerCase('zh-Hant');
+}
+function categoryNameExists(name,exceptId=''){
+ const target=normalizeCategoryName(name);
+ return state.categories.some(c=>String(c.id)!==String(exceptId)&&normalizeCategoryName(c.name)===target);
+}
+function renderCats(){
+ const box=$('catList');box.innerHTML='';box.classList.toggle('editing',categoryEditMode);
+
+ if(!categoryEditMode){
+   state.categories.forEach(c=>{
+     const h=latestRecord(c.id);
+     const btn=document.createElement('button');
+     btn.type='button';
+     btn.className=`cat-item ${c.id===state.currentCategory?'active':''}`;
+     btn.dataset.catId=c.id;if(c.id===state.currentCategory)btn.setAttribute('aria-current','true');
+     const name=document.createElement('span');name.className='cat-name';name.textContent=c.name;
+     const date=document.createElement('span');date.className=`cat-date ${recordHasPending(h)?'pending':''}`;date.textContent=h?fmtDate(h.date):'';
+     btn.appendChild(name);
+     if(c.kind==='independent'){
+       const badge=document.createElement('span');badge.className='independent-badge';badge.textContent='獨';
+       badge.title='獨立項目';badge.setAttribute('aria-label','獨立項目');
+       btn.appendChild(badge);
+     }
+     if(c.id===state.currentCategory){
+       const badge=document.createElement('span');badge.className='cat-current-badge';badge.textContent='目前';
+       btn.appendChild(badge);
+     }
+     btn.appendChild(date);
+     btn.addEventListener('click',()=>selectCategory(c.id));
+     box.appendChild(btn);
+   });
+   return;
+ }
+
+ // 讓游標拖到清單上下邊緣／最後一筆下方時仍可持續捲動與放到最末。
+ box.ondragover=e=>{
+   if(!categoryDragId)return;
+   e.preventDefault();
+   updateCategoryAutoScroll(e.clientY);
+ };
+ box.ondrop=e=>{
+   if(!categoryDragId)return;
+   if(e.target.closest('.cat-edit-item'))return;
+   e.preventDefault();stopCategoryAutoScroll();
+   moveCategoryToEnd(categoryDragId);
+ };
+
+ state.categories.forEach((c,index)=>{
+   const row=document.createElement('div');row.className='cat-edit-item';row.dataset.catId=c.id;row.draggable=true;
+
+   const handle=document.createElement('button');
+   handle.type='button';handle.className='cat-drag-handle';handle.textContent='☰';
+   handle.title='拖曳調整順序';handle.setAttribute('aria-label',`${c.name}：拖曳調整順序`);
+   handle.addEventListener('pointerdown',()=>row.draggable=true);
+
+   const input=document.createElement('input');
+   input.className='input category-name-edit';input.maxLength=30;input.value=c.name;
+   input.dataset.catId=c.id;input.setAttribute('aria-label',`${c.name} 類別名稱`);
+   input.addEventListener('pointerdown',()=>row.draggable=false);
+   input.addEventListener('blur',()=>row.draggable=true);
+
+   const delBtn=document.createElement('button');
+   delBtn.type='button';delBtn.className='btn category-delete';delBtn.textContent='刪除';
+   delBtn.addEventListener('pointerdown',()=>row.draggable=false);
+   delBtn.addEventListener('click',()=>{
+     row.draggable=true;
+     if(state.categories.length<=1)return alert('至少需要保留一個類別。');
+     if(row.querySelector('.cat-inline-confirm'))return;
+     const confirmBox=document.createElement('div');confirmBox.className='cat-inline-confirm';
+     const msg=document.createElement('span');msg.textContent=`確定刪除「${c.name}」？歷史紀錄也會一起刪除。`;
+     const actions=document.createElement('span');actions.className='actions';
+     const cancel=document.createElement('button');cancel.type='button';cancel.className='btn';cancel.textContent='取消';
+     const yes=document.createElement('button');yes.type='button';yes.className='btn danger';yes.textContent='確定刪除';
+     cancel.addEventListener('click',()=>confirmBox.remove());
+     yes.addEventListener('click',()=>deleteCategoryById(c.id));
+     actions.append(cancel,yes);confirmBox.append(msg,actions);row.appendChild(confirmBox);
+   });
+
+   row.addEventListener('dragstart',e=>{
+     if(!row.draggable){e.preventDefault();return}
+     categoryDragId=c.id;row.classList.add('dragging');
+     if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',c.id)}
+   });
+   row.addEventListener('dragend',()=>{
+     row.classList.remove('dragging');
+     box.querySelectorAll('.cat-edit-item').forEach(x=>x.classList.remove('drag-over','drag-over-before','drag-over-after'));
+     categoryDragId='';stopCategoryAutoScroll();
+   });
+   row.addEventListener('dragover',e=>{
+     if(!categoryDragId)return;
+     e.preventDefault();updateCategoryAutoScroll(e.clientY);
+     if(categoryDragId===c.id)return;
+     const rect=row.getBoundingClientRect();
+     const after=e.clientY>rect.top+rect.height/2;
+     row.dataset.dropAfter=after?'1':'0';
+     box.querySelectorAll('.cat-edit-item').forEach(x=>x.classList.remove('drag-over','drag-over-before','drag-over-after'));
+     row.classList.add(after?'drag-over-after':'drag-over-before');
+   });
+   row.addEventListener('dragleave',e=>{
+     if(!row.contains(e.relatedTarget))row.classList.remove('drag-over','drag-over-before','drag-over-after');
+   });
+   row.addEventListener('drop',e=>{
+     e.preventDefault();e.stopPropagation();stopCategoryAutoScroll();
+     const after=row.dataset.dropAfter==='1';
+     row.classList.remove('drag-over','drag-over-before','drag-over-after');
+     delete row.dataset.dropAfter;
+     if(!categoryDragId||categoryDragId===c.id)return;
+     moveCategoryRelative(categoryDragId,c.id,after);
+   });
+
+   const meta=document.createElement('div');meta.className='cat-meta-row';
+   const typeLabel=document.createElement('span');typeLabel.className='cat-meta-label';typeLabel.textContent='類型';
+   const kind=document.createElement('select');kind.className='cat-kind-select';kind.dataset.catId=c.id;
+   const opContinuous=document.createElement('option');opContinuous.value='continuous';opContinuous.textContent='連續作業';
+   const opIndependent=document.createElement('option');opIndependent.value='independent';opIndependent.textContent='獨立項目';
+   kind.append(opContinuous,opIndependent);kind.value=c.kind==='independent'?'independent':'continuous';
+   kind.setAttribute('aria-label',`${c.name} 類型`);
+   kind.addEventListener('pointerdown',()=>row.draggable=false);kind.addEventListener('blur',()=>row.draggable=true);
+
+   const overviewLabel=document.createElement('label');overviewLabel.className='cat-overview-option';
+   const overview=document.createElement('input');overview.type='checkbox';overview.className='category-overview-edit';
+   overview.dataset.catId=c.id;overview.checked=c.showOverview!==false;
+   const overviewText=document.createElement('span');overviewText.textContent='顯示於最新進度總覽';
+   overviewLabel.append(overview,overviewText);
+
+   meta.append(typeLabel,kind,overviewLabel);
+
+   row.append(handle,input,delBtn,meta);
+   box.appendChild(row);
+ });
+
+ const hint=document.createElement('div');hint.className='small';hint.style.gridColumn='1/-1';
+ hint.textContent='☰ 拖曳到欄位上、下邊緣會自動捲動；連續作業會追蹤前次未完成，獨立項目則每一筆各自計算。';
+ box.appendChild(hint);
+
+ const addRow=document.createElement('div');addRow.className='cat-add-item';
+ const addInput=document.createElement('input');addInput.id='newCategoryInput';addInput.className='input';addInput.maxLength=30;addInput.placeholder='新增類別名稱';
+ const addBtn=document.createElement('button');addBtn.type='button';addBtn.className='btn primary';addBtn.innerHTML='<span aria-hidden="true">＋</span> 新增';
+ addBtn.addEventListener('click',addCategoryInline);
+ addInput.addEventListener('keydown',e=>{if(e.key==='Enter')addCategoryInline()});
+ addRow.append(addInput,addBtn);box.appendChild(addRow);
+
+ const actions=document.createElement('div');actions.className='cat-edit-actions';
+ const saveBtn=document.createElement('button');saveBtn.type='button';saveBtn.className='btn primary';saveBtn.textContent='儲存變更';
+ saveBtn.addEventListener('click',saveCategoryChanges);actions.appendChild(saveBtn);box.appendChild(actions);
+}
+let categoryAutoScrollTimer=null,categoryAutoScrollSpeed=0;
+function stopCategoryAutoScroll(){
+ if(categoryAutoScrollTimer){clearInterval(categoryAutoScrollTimer);categoryAutoScrollTimer=null}
+ categoryAutoScrollSpeed=0;
+}
+function updateCategoryAutoScroll(clientY){
+ const side=document.querySelector('.sidebar');
+ if(!side||side.scrollHeight<=side.clientHeight){stopCategoryAutoScroll();return}
+ const rect=side.getBoundingClientRect(),edge=Math.min(96,Math.max(58,rect.height*.18));
+ let speed=0;
+ if(clientY<rect.top+edge){
+   const ratio=Math.min(1,Math.max(0,(rect.top+edge-clientY)/edge));
+   speed=-(7+Math.round(15*ratio));
+ }else if(clientY>rect.bottom-edge){
+   const ratio=Math.min(1,Math.max(0,(clientY-(rect.bottom-edge))/edge));
+   speed=7+Math.round(15*ratio);
+ }
+ if(speed===categoryAutoScrollSpeed&&categoryAutoScrollTimer)return;
+ stopCategoryAutoScroll();categoryAutoScrollSpeed=speed;
+ if(speed)categoryAutoScrollTimer=setInterval(()=>{
+   const max=Math.max(0,side.scrollHeight-side.clientHeight);
+   side.scrollTop=Math.max(0,Math.min(max,side.scrollTop+categoryAutoScrollSpeed));
+ },16);
+}
+function moveCategoryBefore(dragId,targetId){
+ moveCategoryRelative(dragId,targetId,false);
+}
+function moveCategoryRelative(dragId,targetId,after=false){
+ const from=state.categories.findIndex(c=>c.id===dragId);
+ if(from<0)return;
+ const targetBefore=state.categories.findIndex(c=>c.id===targetId);
+ if(targetBefore<0||dragId===targetId)return;
+ const [moved]=state.categories.splice(from,1);
+ const targetIndex=state.categories.findIndex(c=>c.id===targetId);
+ const insertAt=Math.max(0,Math.min(state.categories.length,targetIndex+(after?1:0)));
+ state.categories.splice(insertAt,0,moved);
+ save();renderCats();
+}
+function moveCategoryToEnd(dragId){
+ const from=state.categories.findIndex(c=>c.id===dragId);
+ if(from<0)return;
+ const [moved]=state.categories.splice(from,1);
+ state.categories.push(moved);
+ save();renderCats();
+}
+function selectCategory(id){
+ if(!state.categories.some(c=>String(c.id)===String(id)))return;
+ state.currentCategory=id;historyOkEditId='';historyOkPending.clear();cancelHistoryRecordEdit(false);selectedStudents.clear();progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};save();renderAll()
+}
+function toggleCategoryManager(){
+ if(categoryEditMode){
+   saveCategoryChanges(true);
+ }else{
+   categoryEditMode=true;
+   $('categoryEditBtn').textContent='完成';
+   renderCats();
+   setTimeout(()=>$('newCategoryInput')?.focus(),0);
+ }
+}
+function addCategoryInline(){
+ if(state.categories.length>=60)return alert('類別數量已達上限。');
+ const input=$('newCategoryInput'),v=cleanText(input?.value||'',30).trim();
+ if(!v)return alert('請輸入類別名稱。');
+ if(categoryNameExists(v))return alert(`「${v}」已經存在，請使用不同的類別名稱。`);
+ const id='c_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
+ state.categories.push({id,name:v,kind:'continuous',showOverview:true});state.currentCategory=id;save();renderCats();
+ setTimeout(()=>$('newCategoryInput')?.focus(),0);
+}
+function saveCategoryChanges(closeAfter=false){
+ const inputs=[...document.querySelectorAll('.category-name-edit')];
+ const proposed=[];
+ for(const input of inputs){
+   const v=cleanText(input.value,30).trim();
+   if(!v)return alert('類別名稱不能空白。');
+   proposed.push({id:input.dataset.catId,name:v,norm:normalizeCategoryName(v)});
+ }
+ const seen=new Set();
+ for(const item of proposed){
+   if(seen.has(item.norm))return alert(`「${item.name}」與其他類別名稱重複，請修改後再儲存。`);
+   seen.add(item.norm);
+ }
+ for(const item of proposed){
+   const c=state.categories.find(x=>String(x.id)===String(item.id));
+   if(c){
+     c.name=item.name;
+     const kindEl=document.querySelector(`.cat-kind-select[data-cat-id="${CSS.escape(String(item.id))}"]`);
+     const overviewEl=document.querySelector(`.category-overview-edit[data-cat-id="${CSS.escape(String(item.id))}"]`);
+     c.kind=kindEl?.value==='independent'?'independent':'continuous';
+     c.showOverview=overviewEl?overviewEl.checked:true;
+   }
+ }
+ save();
+ if(closeAfter){
+   categoryEditMode=false;
+   $('categoryEditBtn').textContent='✎ 編輯';
+ }
+ renderAll();
+ if(!closeAfter)renderCats();
+}
+function deleteCategoryById(id){
+ id=String(id||'');
+ const idx=state.categories.findIndex(x=>String(x.id)===id);
+ if(idx<0)return alert('找不到要刪除的類別，請重新整理後再試一次。');
+ if(state.categories.length<=1)return alert('至少需要保留一個類別。');
+
+ state.categories.splice(idx,1);
+ state.history=state.history.filter(h=>String(h.catId)!==id);
+ Object.keys(state.drafts).filter(k=>k.startsWith(id+'|')).forEach(k=>delete state.drafts[k]);
+ if(String(state.currentCategory)===id)state.currentCategory=state.categories[Math.min(idx,state.categories.length-1)].id;
+
+ save();
+ selectedStudents.clear();
+ progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
+ renderAll();
+ renderCats();
+}
+
+function progressFromHistory(h){
+ const content=String(h?.content||'').trim();
+ if(!content)return {a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
+ let m=null;
+ if(/^P\.\d+/.test(content)){
+   const chunks=content.split('、').map(x=>x.trim()).filter(Boolean);
+   m=chunks[0].match(/^P\.(\d+)(?:～P\.(\d+))?$/);
+   if(m)return {a:m[1]||'',b:m[2]||'',skipPages:chunks.slice(1).map(x=>x.replace(/P\./g,'')).join('、'),unit:'L',unitNums:'',unitDetail:'',free:''};
+ }
+ let detail='',unitContent=content;
+ if(/\s生字$/.test(unitContent)){detail='生字';unitContent=unitContent.replace(/\s生字$/,'')}
+ else if(/\s語詞＋綜合練習$/.test(unitContent)){detail='語詞＋綜合練習';unitContent=unitContent.replace(/\s語詞＋綜合練習$/,'')}
+ m=unitContent.match(/^(L|Ch|U)(.+)$/);
+ if(m){
+   const unit=m[1],rest=m[2].replace(new RegExp(unit,'g'),'').replace(/[^0-9,、\-～]/g,'').slice(0,30);
+   if(rest)return {a:'',b:'',unit,unitNums:rest,unitDetail:detail,free:''};
+ }
+ return {a:'',b:'',unit:'L',unitNums:'',unitDetail:'',free:content.slice(0,100)};
+}
+function renderHistoryMainEditBanner(){
+ const box=$('historyMainEditBanner');if(!box)return;
+ const h=state.history.find(x=>x.id===historyEditId);
+ if(!h){
+   box.classList.remove('show');box.setAttribute('aria-hidden','true');box.innerHTML='';
+   $('updateHomeworkBtn').textContent='更新';return;
+ }
+ const c=state.categories.find(x=>x.id===h.catId);
+ box.classList.add('show');box.setAttribute('aria-hidden','false');
+ box.innerHTML=`<div><div class="title">正在編輯歷史紀錄</div><div class="small">${esc(c?.name||'')}｜${h.date}${h.content?'｜'+esc(h.content):''}。可直接用上方三種進度輸入與下方座號狀態修改。</div></div><div class="actions"><button id="cancelHistoryMainEditBtn" class="btn" type="button">取消編輯</button></div>`;
+ $('cancelHistoryMainEditBtn')?.addEventListener('click',()=>cancelHistoryRecordEdit());
+ $('updateHomeworkBtn').textContent='儲存歷史修改';
+}
+function renderProgress(){
+ $('progressEditor').innerHTML=`<div class="progress-mobile-tabs mobile-only">
+   <button class="btn progress-mode-btn" type="button" data-mode="pages">頁數</button>
+   <button class="btn progress-mode-btn" type="button" data-mode="unit">單元</button>
+   <button class="btn progress-mode-btn" type="button" data-mode="free">自由輸入</button>
+   </div>
+   <span class="progress-label">頁數</span>
+   <div class="page-inline progress-mode-group" data-progress-mode="pages"><span>P.</span><input id="pA" class="mini-input" inputmode="numeric" placeholder="起頁" value="${esc(progress.a||'')}"><span>～</span><span>P.</span><input id="pB" class="mini-input" inputmode="numeric" placeholder="迄頁" value="${esc(progress.b||'')}"><button id="skipPagesToggle" class="btn skip-pages-toggle" type="button">＋跳頁</button><div id="skipPagesWrap" class="skip-pages-wrap"><input id="skipPages" class="input" inputmode="text" maxlength="60" placeholder="例如 18、20～22" value="${esc(progress.skipPages||'')}"><span class="hint">可用「、」或「,」分隔；「～」或「-」表示範圍</span></div></div>
+   <span class="progress-label">單元</span>
+   <div class="unit-inline progress-mode-group" data-progress-mode="unit"><select id="unitType" class="unit-select"><option>L</option><option>Ch</option><option>U</option></select><input id="unitNums" class="input" inputmode="text" placeholder="例如 4、5／4～6／4-6" value="${esc(progress.unitNums||'')}"><select id="unitDetail" class="unit-detail-select" aria-label="單元內容"><option value="">不指定內容</option><option value="生字">生字</option><option value="語詞＋綜合練習">語詞＋綜合練習</option></select></div>
+   <span class="progress-label">自由輸入</span>
+   <div class="free-inline progress-mode-group" data-progress-mode="free"><input id="freeProgress" class="input" maxlength="100" placeholder="作文題目、學習單名稱等" value="${esc(progress.free||'')}"></div>`;
+ $('unitType').value=['L','Ch','U'].includes(progress.unit)?progress.unit:'L';
+ $('unitDetail').value=['','生字','語詞＋綜合練習'].includes(progress.unitDetail)?progress.unitDetail:'';
+ $('pA').oninput=e=>{progress.a=e.target.value.replace(/\D/g,'').slice(0,4);renderProgressValidation()};
+ $('pB').oninput=e=>{progress.b=e.target.value.replace(/\D/g,'').slice(0,4);renderProgressValidation()};
+ $('skipPages').oninput=e=>{progress.skipPages=e.target.value.replace(/[^0-9,，、\-～]/g,'').replace(/，/g,',').slice(0,60);e.target.value=progress.skipPages;renderProgressValidation()};
+ const syncSkipPagesUI=()=>{const has=String(progress.skipPages||'').trim()!=='';$('skipPagesWrap').classList.toggle('show',has);$('skipPagesToggle').textContent=has?'－收起跳頁':'＋跳頁'};
+ $('skipPagesToggle').onclick=()=>{const show=!$('skipPagesWrap').classList.contains('show');$('skipPagesWrap').classList.toggle('show',show);$('skipPagesToggle').textContent=show?'－收起跳頁':'＋跳頁';if(show)$('skipPages').focus()};
+ syncSkipPagesUI();
+ $('unitType').onchange=e=>{progress.unit=e.target.value;renderProgressValidation()};
+ $('unitNums').oninput=e=>{progress.unitNums=e.target.value.replace(/[^0-9,，、\-～]/g,'').replace(/，/g,',').slice(0,30);e.target.value=progress.unitNums;renderProgressValidation()};
+ $('unitDetail').onchange=e=>{progress.unitDetail=e.target.value;renderProgressValidation()};
+ $('freeProgress').oninput=e=>{progress.free=e.target.value.slice(0,100);renderProgressValidation()};
+ renderProgressValidation();
+ const initialMode=(progress.a||progress.b||progress.skipPages)?'pages':((progress.unitNums||progress.unitDetail)?'unit':(progress.free?'free':'pages'));
+ const setMobileProgressMode=(mode,clearOthers=false)=>{
+   if(clearOthers){
+     if(mode!=='pages'){progress.a='';progress.b='';progress.skipPages='';$('pA').value='';$('pB').value='';$('skipPages').value='';$('skipPagesWrap').classList.remove('show')}
+     if(mode!=='unit'){progress.unitNums='';progress.unitDetail='';$('unitNums').value='';$('unitDetail').value=''}
+     if(mode!=='free'){progress.free='';$('freeProgress').value=''}
+   }
+   document.querySelectorAll('.progress-mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+   $('progressEditor').querySelectorAll('[data-progress-mode]').forEach(g=>g.classList.toggle('active',g.dataset.progressMode===mode));
+   renderProgressValidation();
+ };
+ document.querySelectorAll('.progress-mode-btn').forEach(b=>b.addEventListener('click',()=>setMobileProgressMode(b.dataset.mode,true)));
+ setMobileProgressMode(initialMode,false);
+}
+$('categoryEditBtn').addEventListener('click',toggleCategoryManager);
+document.querySelectorAll('.homework-status-btn').forEach(btn=>btn.addEventListener('click',()=>{selectedStatus=btn.dataset.status;document.querySelectorAll('.homework-status-btn').forEach(b=>b.classList.toggle('active',b===btn));if(selectedStudents.size)applyStatusToSelected()}));
+function todayLeaveSet(){return new Set(state.contact.date===TODAY?state.contact.leave:[])}
+function renderStudentGrid(){
+ const d=getDraft(),leave=todayLeaveSet(),isToday=($('recordDate').value||TODAY)===TODAY,grid=$('studentGrid');
+ grid.innerHTML='';
+ for(let n=1;n<=state.studentCount;n++){
+   const isAutoLeave=isToday&&leave.has(n)&&!Object.prototype.hasOwnProperty.call(d,n);
+   const hasExplicit=Object.prototype.hasOwnProperty.call(d,n);
+   const st=hasExplicit?d[n]:(isAutoLeave?'orange':'red');
+   const b=document.createElement('button');
+   b.type='button';
+   b.className=`num ${st} ${selectedStudents.has(n)?'selected':''}`;
+   b.textContent=n;
+   b.addEventListener('click',()=>{
+     // 尚未登記的座號：單點即快速通過；自動請假不適用。
+     if(!hasExplicit&&!isAutoLeave){
+       d[n]='blue';
+       selectedStudents.delete(n);
+       save();
+       renderStudentGrid();
+       return;
+     }
+     // 編輯／補登既有歷史紀錄時：紅色（原本未交）保留「點一下直接通過」的快速操作。
+     // 其他狀態仍維持原本：先選座號，再用上方狀態按鈕修改。
+     if(historyEditId&&st==='red'){
+       d[n]='blue';
+       selectedStudents.delete(n);
+       renderStudentGrid();
+       return;
+     }
+     // 已有其他明確狀態時，只做原本的選取/取消選取。
+     selectedStudents.has(n)?selectedStudents.delete(n):selectedStudents.add(n);
+     renderStudentGrid();
+   });
+   grid.appendChild(b);
+ }
+}
+function applyStatusToSelected(){const d=getDraft();selectedStudents.forEach(n=>d[n]=selectedStatus);save();selectedStudents.clear();renderStudentGrid()}
+function clearCurrentDraft(){
+ if(historyEditId){
+   const h=state.history.find(x=>x.id===historyEditId);
+   historyEditDraft={};
+   if(h)for(let n=1;n<=state.studentCount;n++)historyEditDraft[n]=h.statuses?.[n]||'red';
+   selectedStudents.clear();renderStudentGrid();return;
+ }
+ const k=draftKey(),prefix=k+'|';
+ delete state.drafts[k];
+ Object.keys(state.drafts).filter(x=>x.startsWith(prefix)).forEach(x=>delete state.drafts[x]);
+ selectedStudents.clear();save();renderStudentGrid();renderCurrentCategorySummary()
+}
+function markAllPass(){
+ const d=getDraft();
+ const excludeLeave=!!$('excludeLeaveOnAllPass')?.checked;
+ const leave=todayLeaveSet();
+ const isToday=($('recordDate').value||TODAY)===TODAY;
+ for(let n=1;n<=state.studentCount;n++){
+   const explicitLeave=d[n]==='orange';
+   const contactLeave=isToday&&leave.has(n);
+   if(excludeLeave&&(explicitLeave||contactLeave)){
+     // 保留既有手動請假；今日聯絡簿請假則維持自動橘色，不寫成通過。
+     if(contactLeave&&!explicitLeave)delete d[n];
+     continue;
+   }
+   d[n]='blue';
+ }
+ save();selectedStudents.clear();renderStudentGrid();
+}
+$('recordDate').addEventListener('change',()=>{selectedStudents.clear();renderStudentGrid();if(!historyEditId)renderCurrentCategorySummary()});
+function resolvedPartState(h,n){
+ const p=h.resolvedParts?.[n]||{};
+ if(h.resolved?.[n])return {missing:true,correction:true,signature:true};
+ return {missing:!!p.missing,correction:!!p.correction,signature:!!p.signature};
+}
+function isStatusFullyResolved(h,n){
+ const st=h.statuses[n],p=resolvedPartState(h,n);
+ if(st==='red')return p.missing;
+ if(st==='yellow')return p.correction;
+ if(st==='green')return p.signature;
+ if(st==='ring')return p.correction&&p.signature;
+ // 請假只是當天狀態，不代表免做；後續若確認通過，代表已補寫完成。
+ if(st==='orange')return p.missing;
+ return false;
+}
+function continuousChronological(catId){
+ const indexed=state.history
+   .map((h,index)=>({h,index}))
+   .filter(x=>x.h.catId===catId);
+ indexed.sort((a,b)=>{
+   const d=String(a.h.date).localeCompare(String(b.h.date));
+   if(d)return d;
+   const u=(Number(a.h.updated)||0)-(Number(b.h.updated)||0);
+   if(u)return u;
+   return a.index-b.index;
+ });
+ return indexed.map(x=>x.h);
+}
+function applyContinuousResolution(current,earlier){
+ for(let n=1;n<=state.studentCount;n++){
+   const now=current.statuses?.[n];
+
+   if(now==='blue'){
+     for(const h of earlier){
+       const prev=h.statuses?.[n];
+       if(!['red','yellow','green','ring','orange'].includes(prev))continue;
+       h.resolved||={};h.resolvedParts||={};
+       h.resolved[n]=true;
+       h.resolvedParts[n]={missing:true,correction:true,signature:true};
+     }
+     continue;
+   }
+
+   for(const h of earlier){
+     const prev=h.statuses?.[n];
+     if(!['red','yellow','green','ring','orange'].includes(prev)||isStatusFullyResolved(h,n))continue;
+     h.resolvedParts||={};
+     const parts=h.resolvedParts[n]||{};
+
+     if(now==='yellow'){
+       // 現在只剩未訂正，代表簽名問題已處理；請假仍視為尚未確認補寫。
+       parts.signature=true;
+     }else if(now==='green'){
+       // 現在只剩未簽，代表訂正問題已處理。
+       parts.correction=true;
+     }
+     h.resolvedParts[n]=parts;
+     if(isStatusFullyResolved(h,n)){
+       h.resolved||={};
+       h.resolved[n]=true;
+     }
+   }
+ }
+}
+function recomputeContinuousResolutions(catId){
+ const category=state.categories.find(c=>c.id===catId);
+ if(!category||category.kind!=='continuous')return;
+
+ const records=continuousChronological(catId);
+
+ // 連續作業的 OK 全部由歷史先後重新推算，避免同日多筆、刪除、
+ // 匯入舊資料或先前版本留下的 resolved 狀態互相衝突。
+ for(const h of records){
+   h.resolved={};
+   h.resolvedParts={};
+ }
+ for(let i=0;i<records.length;i++){
+   applyContinuousResolution(records[i],records.slice(0,i));
+ }
+ for(const h of records){
+   h.manualResolved||={};
+   for(const [seat,flag] of Object.entries(h.manualResolved)){
+     if(flag!==true)continue;
+     const st=h.statuses?.[seat];
+     if(!['red','yellow','green','ring','orange'].includes(st))continue;
+     h.resolved||={};h.resolvedParts||={};
+     h.resolved[seat]=true;
+     h.resolvedParts[seat]={missing:true,correction:true,signature:true};
+   }
+ }
+}
+function recomputeAllContinuousResolutions(){
+ for(const c of state.categories)if(c.kind==='continuous')recomputeContinuousResolutions(c.id);
+}
+function resolvePrevious(catId,rec){
+ // 保留舊呼叫名稱，但實際改為從整個類別歷史重新計算。
+ // 因此同一天、不同標題，只要新紀錄較晚登記，也一定會影響前面的紀錄。
+ recomputeContinuousResolutions(catId);
+}
+
+function nextUpdatedStamp(){
+ const maxExisting=state.history.reduce((m,h)=>Math.max(m,Number(h.updated)||0),0);
+ return Math.max(Date.now(),maxExisting+1);
+}
+function commitHomeworkRecord(c,date,content,progressType,d,mode='new',existingIndex=-1){
+ const existing=existingIndex>=0?state.history[existingIndex]:null;
+ const rec={
+   id:mode==='overwrite'&&existing?existing.id:'h_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),
+   catId:c.id,date,content,progressType,statuses:d,
+   resolved:mode==='overwrite'&&existing?(existing.resolved||{}):{},
+   resolvedParts:mode==='overwrite'&&existing?(existing.resolvedParts||{}):{},
+   manualResolved:mode==='overwrite'&&existing?(existing.manualResolved||{}):{},
+   updated:nextUpdatedStamp()
+ };
+ if(mode==='overwrite'&&existingIndex>=0)state.history[existingIndex]=rec;
+ else state.history.push(rec);
+
+ resolvePrevious(c.id,rec);
+ delete state.drafts[draftKey()];
+ save();selectedStudents.clear();renderSummary(rec);renderAll();
+}
+function showSameRecordChoice(c,date,content,progressType,d,idx){
+ const summary=$('dailySummary');
+ summary.classList.remove('hidden');
+ summary.innerHTML='';
+ const box=document.createElement('div');box.className='record-choice-box';
+ const msg=document.createElement('div');
+ const label=content?`「${content}」`:'（未填標題／進度）';
+ msg.innerHTML=`<b>同一天已有相同標題／進度的紀錄 ${esc(label)}</b><div class="small" style="margin-top:3px">要覆蓋原紀錄，還是保留成另一筆？如果保留兩筆，較新的這筆會用來判斷前面紀錄是否加上 OK。</div>`;
+ const actions=document.createElement('div');actions.className='actions';
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='btn';cancel.textContent='取消';
+ const keep=document.createElement('button');keep.type='button';keep.className='btn';keep.textContent='保留兩筆';
+ const overwrite=document.createElement('button');overwrite.type='button';overwrite.className='btn primary';overwrite.textContent='覆蓋原紀錄';
+ cancel.addEventListener('click',()=>{summary.classList.add('hidden');summary.innerHTML=''});
+ keep.addEventListener('click',()=>commitHomeworkRecord(c,date,content,progressType,d,'new',-1));
+ overwrite.addEventListener('click',()=>commitHomeworkRecord(c,date,content,progressType,d,'overwrite',idx));
+ actions.append(cancel,keep,overwrite);box.append(msg,actions);summary.appendChild(box);
+}
+function updateHomework(){
+ if(historyEditId)return saveHistoryRecordFromMain();
+ const c=currentCat(),date=$('recordDate').value||TODAY,progressResult=buildContent();
+ if(!validDate(date))return alert('登記日期不正確，請重新選擇日期。');
+ if(progressResult.error){
+   renderProgressValidation();
+   const msg=progressErrorText(progressResult);
+   $('progressValidationMsg')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+   if(msg)alert(msg);
+   return;
+ }
+ const content=progressResult.content,progressType=progressResult.type;
+ const key=draftKey(),d={...(state.drafts[key]||{})},leave=todayLeaveSet(),isToday=date===TODAY;
+ for(let n=1;n<=state.studentCount;n++)if(!d[n])d[n]=isToday&&leave.has(n)?'orange':'red';
+
+ // 同一天、同一類別、標題／進度完全一致（包含兩筆都沒填）時，不再偷偷覆蓋。
+ // 由使用者選擇「覆蓋原紀錄」或「保留兩筆」。
+ const idx=state.history.findIndex(h=>h.catId===c.id&&h.date===date&&(h.content||'')===(content||''));
+ if(idx>=0)return showSameRecordChoice(c,date,content,progressType,d,idx);
+
+ // 同一天但標題／進度不同：直接保留成另一筆。
+ commitHomeworkRecord(c,date,content,progressType,d,'new',-1);
+}
+function summaryStatusGroups(rec){
+ const groups={orange:[],red:[],green:[],ring:[],yellow:[]};
+ for(let n=1;n<=state.studentCount;n++){
+   const st=rec.statuses?.[n];
+   if(groups[st])groups[st].push(n);
+ }
+ return groups;
+}
+function renderSummary(rec){
+ const groups=summaryStatusGroups(rec);
+ const labels={orange:['請假','orange'],red:['未交／未寫','red'],green:['未簽','green'],ring:['未訂簽','ring'],yellow:['未訂正','yellow']};
+ const lines=Object.entries(groups).filter(([,v])=>v.length).map(([k,v])=>`<div class="summary-line"><span class="dot ${labels[k][1]}"></span><b>${labels[k][0]}：</b>${v.join('、')}</div>`).join('');
+ $('dailySummary').innerHTML=`<div class="current-status-heading"><h4 style="margin:0">${esc(currentCat().name)}｜${rec.content?esc(rec.content)+'｜':''}${rec.date}</h4><span class="small">目前繳交情況</span></div>${lines||'<div class="small" style="margin-top:6px">目前沒有需要追蹤的狀態。</div>'}`;
+ $('dailySummary').classList.remove('hidden');
+}
+function renderCurrentCategorySummary(){
+ const rec=latestRecord(currentCat().id);
+ if(!rec){$('dailySummary').classList.add('hidden');$('dailySummary').innerHTML='';return}
+ renderSummary(rec);
+}
+function statusIcon(st,resolved=false,parts=null){
+ if(st==='blue')return'';
+ if(resolved)return `<span class="cell-mark ${st} resolved"></span>`;
+ if(st==='ring'&&parts){
+   if(parts.correction&&!parts.signature)return `<span class="cell-mark ring partial-resolved" data-ok="訂OK"></span>`;
+   if(parts.signature&&!parts.correction)return `<span class="cell-mark ring partial-resolved" data-ok="簽OK"></span>`;
+ }
+ return `<span class="cell-mark ${st}"></span>`;
+}
+function progressHTML(h){
+ if(!h.content)return'<span class="small">—</span>';
+ const m=h.content.match(/^P\.(\d+)～P\.(\d+)$/);
+ if(m)return`<span class="progress-pages"><span>P.${m[1]}</span><span class="wave">～</span><span>P.${m[2]}</span></span>`;
+ return`<span class="progress-cell">${esc(h.content)}</span>`;
+}
+function toggleOverview(force){
+ const panel=$('overviewPanel'),btn=$('overviewToggleBtn');
+ const show=typeof force==='boolean'?force:!panel.classList.contains('show');
+ panel.classList.toggle('show',show);
+ panel.setAttribute('aria-hidden',show?'false':'true');
+ btn.textContent=show?'收起總覽':'作業最新進度總覽';
+ if(show){renderOverview();panel.scrollIntoView({behavior:'smooth',block:'start'})}
+}
+function isWholeClassOK(h){if(!h)return false;for(let n=1;n<=state.studentCount;n++)if((h.statuses[n]||'red')!=='blue')return false;return true}
+function hasUnresolvedIndependentRecord(h){
+ if(!h)return false;
+ for(let n=1;n<=state.studentCount;n++){
+   const st=h.statuses?.[n];
+   if(['red','yellow','green','ring'].includes(st)&&!isStatusFullyResolved(h,n))return true;
+ }
+ return false;
+}
+function workKeyword(content){
+ let s=cleanText(content||'',100).trim();
+ if(!s)return'';
+ // 純本機規則：移除常見低辨識度開頭，再找較有意義的 1～2 字，不會把標題送到網路。
+ s=s.replace(/^P\.\d+(?:～P\.\d+)?$/,'').replace(/^(L|Ch|U)\s*/i,'').trim();
+ const weakPrefixes=['我的','一次','一個','一篇','這次','這個','關於','難忘的','最難忘的','我最喜歡的','我喜歡的'];
+ let changed=true;
+ while(changed){
+   changed=false;
+   for(const p of weakPrefixes)if(s.startsWith(p)&&s.length>p.length){s=s.slice(p.length);changed=true;break}
+ }
+ s=s.replace(/[「」『』【】\[\]()（）：:，,。.!！?？\s_-]+/g,'');
+ if(!s)return'';
+ // 再略過少量連接語，優先留下題目的辨識核心。
+ const fillers=['的','之','與','和'];
+ while(s.length>1&&fillers.includes(s[0]))s=s.slice(1);
+ return Array.from(s).slice(0,2).join('');
+}
+function independentWorkTags(catId){
+ const records=state.history.filter(h=>h.catId===catId&&hasUnresolvedIndependentRecord(h)).sort(compareHistory);
+ if(!records.length)return'';
+ const tags=records.slice(0,4).map(h=>{
+   const autoKey=workKeyword(h.content),manual=cleanText(h.workLabel||'',6).trim();
+   const key=manual||autoKey;
+   const label=key||fmtDate(h.date);
+   const cls=key?'overview-work-tag':'overview-work-tag date';
+   const title=esc(`${h.date}${h.content?'｜'+h.content:''}${manual?'｜自訂標籤：'+manual:'｜雙擊可修改小標籤'}`);
+   return `<button type="button" class="${cls}" data-work-label-id="${esc(h.id)}" title="${title}">${esc(label)}</button>`;
+ });
+ if(records.length>4)tags.push(`<span class="overview-work-tag" title="另有 ${records.length-4} 筆未結清">+${records.length-4}</span>`);
+ return `<div class="overview-work-tags">${tags.join('')}</div>`;
+}
+function independentPendingCounts(catId,seat){
+ const counts={red:0,green:0,ring:0,yellow:0};
+ for(const h of state.history){
+   if(h.catId!==catId)continue;
+   const st=h.statuses?.[seat];
+   if(!Object.prototype.hasOwnProperty.call(counts,st))continue;
+   if(isStatusFullyResolved(h,seat))continue;
+   counts[st]++;
+ }
+ return counts;
+}
+function independentOverviewCell(catId,seat){
+ const counts=independentPendingCounts(catId,seat);
+ const order=['red','green','ring','yellow'];
+ const labels={red:'未交／未寫',green:'未簽',ring:'未訂簽',yellow:'未訂正'};
+ const parts=order.filter(st=>counts[st]>0).map(st=>
+   `<span class="overview-debt" title="${labels[st]} ${counts[st]} 筆"><span class="cell-mark ${st}"></span><span class="overview-debt-count">${counts[st]}</span></span>`
+ );
+ return parts.length?`<div class="overview-debt-group">${parts.join('')}</div>`:'';
+}
+function editIndependentWorkLabel(historyId){
+ const h=state.history.find(x=>x.id===historyId);if(!h)return;
+ const c=state.categories.find(x=>x.id===h.catId);if(c?.kind!=='independent')return;
+ const auto=workKeyword(h.content)||fmtDate(h.date);
+ const current=cleanText(h.workLabel||'',6);
+ const raw=prompt(`修改總覽小標籤（最多 6 字）\n留空會恢復自動判斷：${auto}`,current);
+ if(raw===null)return;
+ h.workLabel=cleanText(raw,6).trim();
+ save();renderOverview();
+}
+
+function statusText(st,h=null,seat=null){
+ const labels={blue:'通過',red:'未交／未寫',green:'未簽',ring:'未訂簽',yellow:'未訂正',orange:'請假'};
+ const cls=VALID_STATUS.has(st)?st:'red';
+ // 個人紀錄顯示「目前結果」：只要這筆已完成補登 OK，
+ // 統計上已視為通過，因此個人紀錄也統一顯示藍色「通過」。
+ // 原始狀態與補登資訊仍完整保留在 history，不修改底層資料。
+ if(h&&seat!=null&&isStatusFullyResolved(h,seat)){
+   return `<span class="student-status-text"><span class="dot blue"></span>通過</span>`;
+ }
+ return `<span class="student-status-text"><span class="dot ${cls}"></span>${labels[cls]||labels.red}</span>`;
+}
+function studentHasAnyHistory(catId){return state.history.some(h=>h.catId===catId)}
+function studentRecordIsPending(h,seat){
+ if(!h)return false;
+ const st=h.statuses?.[seat]||'red';
+ // 與既有「待處理」判斷一致：請假不視為欠件；已補登 OK 也不再列為待處理。
+ return ['red','yellow','green','ring'].includes(st)&&!isStatusFullyResolved(h,seat);
+}
+function categoryPendingForStudent(c,seat){
+ if(c.kind==='continuous')return studentRecordIsPending(latestRecord(c.id),seat);
+ return state.history.some(h=>h.catId===c.id&&studentRecordIsPending(h,seat));
+}
+function sortStudentRecordCategories(cats,seat){
+ if(studentRecordSortMode!=='pending')return [...cats];
+ return cats.map((c,index)=>({c,index,pending:categoryPendingForStudent(c,seat)}))
+   .sort((a,b)=>Number(b.pending)-Number(a.pending)||a.index-b.index)
+   .map(x=>x.c);
+}
+function studentRecordRowsWithBreak(cats,seat,rowBuilder){
+ let seenCompleted=false,breakAdded=false;
+ return cats.map(c=>{
+   const pending=categoryPendingForStudent(c,seat);
+   if(!pending)seenCompleted=true;
+   const addBreak=studentRecordSortMode==='pending'&&seenCompleted&&!pending&&!breakAdded;
+   if(addBreak)breakAdded=true;
+   return rowBuilder(c,addBreak);
+ }).join('');
+}
+function syncStudentSortButtons(){
+ const category=$('studentSortCategoryBtn'),pending=$('studentSortPendingBtn');
+ if(!category||!pending)return;
+ const isPending=studentRecordSortMode==='pending';
+ category.classList.toggle('active',!isPending);category.setAttribute('aria-pressed',!isPending?'true':'false');
+ pending.classList.toggle('active',isPending);pending.setAttribute('aria-pressed',isPending?'true':'false');
+}
+function setStudentRecordSortMode(mode){
+ studentRecordSortMode=mode==='pending'?'pending':'category';
+ syncStudentSortButtons();renderStudentRecord();
+}
+function renderStudentRecord(){
+ const picker=$('studentSeatPicker'),body=$('studentRecordBody');if(!picker||!body)return;
+ syncStudentSortButtons();
+ picker.innerHTML='';
+ for(let n=1;n<=state.studentCount;n++){
+   const b=document.createElement('button');b.type='button';b.className='student-seat-btn'+(n===selectedStudentSeat?' active':'');b.textContent=n;
+   b.setAttribute('aria-pressed',n===selectedStudentSeat?'true':'false');
+   b.addEventListener('click',()=>{selectedStudentSeat=n;renderStudentRecord()});
+   picker.appendChild(b);
+ }
+ const cats=state.categories.filter(c=>studentHasAnyHistory(c.id));
+ if(!cats.length){body.innerHTML='<div class="student-record-empty">目前尚無任何正式作業紀錄。</div>';return}
+ const continuous=sortStudentRecordCategories(cats.filter(c=>c.kind==='continuous'),selectedStudentSeat);
+ const independent=sortStudentRecordCategories(cats.filter(c=>c.kind==='independent'),selectedStudentSeat);
+ let out=`<div class="small" style="margin-bottom:6px"><b>${selectedStudentSeat} 號</b>｜只顯示已有正式登記紀錄的類別</div>`;
+ if(continuous.length){
+   const rows=studentRecordRowsWithBreak(continuous,selectedStudentSeat,(c,addBreak)=>{
+     const h=latestRecord(c.id),st=h.statuses?.[selectedStudentSeat]||'red';
+     return `<tr${addBreak?' class="student-record-priority-break"':''}><td>${esc(c.name)}</td><td>${h.date}</td><td>${h.content?esc(h.content):'—'}</td><td>${statusText(st,h,selectedStudentSeat)}</td></tr>`;
+   });
+   out+=`<section class="student-record-section"><h4>連續作業｜最新一期</h4><div class="student-record-table-wrap"><table class="student-record-table"><colgroup><col class="student-col-category"><col class="student-col-date"><col class="student-col-progress"><col class="student-col-status"></colgroup><thead><tr><th>類別</th><th>日期</th><th>進度</th><th>狀態</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+ }
+ if(independent.length){
+   // alpha.43：獨立項目以「每一筆紀錄」判斷待處理，而不是只看整個類別。
+   // 這樣同一類別中，未完成的題目／篇目也會真正浮到已通過紀錄之前。
+   let independentRows=[];
+   independent.forEach((c,catIndex)=>{
+     const recs=state.history.filter(h=>h.catId===c.id).sort(compareHistory);
+     recs.forEach((h,recordIndex)=>independentRows.push({c,h,catIndex,recordIndex,pending:studentRecordIsPending(h,selectedStudentSeat)}));
+   });
+   if(studentRecordSortMode==='pending'){
+     independentRows.sort((a,b)=>Number(b.pending)-Number(a.pending)||a.catIndex-b.catIndex||a.recordIndex-b.recordIndex);
+   }
+   let completedStarted=false,breakAdded=false;
+   const rows=independentRows.map(({c,h,pending})=>{
+     if(!pending)completedStarted=true;
+     const addBreak=studentRecordSortMode==='pending'&&completedStarted&&!pending&&!breakAdded;
+     if(addBreak)breakAdded=true;
+     const st=h.statuses?.[selectedStudentSeat]||'red';
+     return `<tr${addBreak?' class="student-record-priority-break"':''}><td>${esc(c.name)}</td><td>${h.date}</td><td>${h.content?esc(h.content):'—'}</td><td>${statusText(st,h,selectedStudentSeat)}</td></tr>`;
+   }).join('');
+   out+=`<section class="student-record-section"><h4>獨立項目｜全部紀錄</h4><div class="student-record-table-wrap"><table class="student-record-table"><colgroup><col class="student-col-category"><col class="student-col-date"><col class="student-col-progress"><col class="student-col-status"></colgroup><thead><tr><th>類別</th><th>日期</th><th>進度／標題</th><th>狀態</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+ }
+ body.innerHTML=out;
+}
+function toggleStudentPanel(force){
+ const panel=$('studentPanel'),btn=$('studentToggleBtn');
+ const show=typeof force==='boolean'?force:!panel.classList.contains('show');
+ panel.classList.toggle('show',show);panel.setAttribute('aria-hidden',show?'false':'true');
+ btn.textContent=show?'收起個人紀錄':'學生個人紀錄';
+ if(show){renderStudentRecord();panel.scrollIntoView({behavior:'smooth',block:'start'})}
+}
+function excelCellTextForContinuous(h,seat){
+ const st=h.statuses?.[seat]||'red';
+ const labels={blue:'通過',red:'未交／未寫',green:'未簽',ring:'未訂簽',yellow:'未訂正',orange:'請假'};
+ let t=labels[st]||'未交／未寫';
+ if(isStatusFullyResolved(h,seat))t+=' OK';
+ else if(st==='ring'){
+   const p=resolvedPartState(h,seat);
+   if(p.correction&&!p.signature)t+=' 訂OK';
+   if(p.signature&&!p.correction)t+=' 簽OK';
+ }
+ return t;
+}
+function excelCellTextForIndependent(catId,seat){
+ const counts=independentPendingCounts(catId,seat);
+ const labels={red:'未交／未寫',green:'未簽',ring:'未訂簽',yellow:'未訂正'};
+ return ['red','green','ring','yellow'].filter(k=>counts[k]).map(k=>`${labels[k]}${counts[k]}筆`).join('；');
+}
+function studentExportStatusText(h,seat){
+ const st=h.statuses?.[seat]||'red';
+ const labels={blue:'通過',red:'未交／未寫',green:'未簽',ring:'未訂簽',yellow:'未訂正',orange:'請假'};
+ // 個人紀錄匯出與畫面採同一語意：完整補登 OK 後即視為「通過」。
+ if(isStatusFullyResolved(h,seat))return '通過';
+ return labels[st]||labels.red;
+}
+function parseStudentExportRange(raw){
+ const text=cleanText(raw||'',120).trim().replace(/[～—–]/g,'-').replace(/[，、]/g,',').replace(/\s+/g,'');
+ if(!text)return {error:'請輸入要匯出的座號，例如 1-5,8,10-15。'};
+ if(!/^\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*$/.test(text))return {error:'座號格式不正確。可輸入 1-5,8,10-15。'};
+ const seen=new Set(),seats=[];
+ for(const token of text.split(',')){
+   let a,b;
+   if(token.includes('-')){
+     const pair=token.split('-');a=Number(pair[0]);b=Number(pair[1]);
+     if(a>b)return {error:`範圍 ${token} 的起始座號不可大於結束座號。`};
+   }else a=b=Number(token);
+   if(a<1||b>state.studentCount)return {error:`座號必須介於 1～${state.studentCount}。`};
+   for(let n=a;n<=b;n++){
+     if(seen.has(n))return {error:`座號 ${n} 重複了，請調整輸入範圍。`};
+     seen.add(n);seats.push(n);
+   }
+ }
+ return {seats:seats.sort((a,b)=>a-b)};
+}
+function studentExportRows(seat){
+ const cats=state.categories.filter(c=>studentHasAnyHistory(c.id));
+ const continuous=cats.filter(c=>c.kind==='continuous');
+ const independent=cats.filter(c=>c.kind==='independent');
+ const rows=[[`${seat}號 學生作業紀錄`],[]];
+ if(continuous.length){
+   rows.push(['連續作業｜最新一期'],['類別','日期','進度','狀態']);
+   for(const c of continuous){
+     const h=latestRecord(c.id);if(!h)continue;
+     rows.push([c.name,h.date,h.content||'—',studentExportStatusText(h,seat)]);
+   }
+ }
+ if(independent.length){
+   if(continuous.length)rows.push([]);
+   rows.push(['獨立項目｜全部紀錄'],['類別','日期','進度／標題','狀態']);
+   for(const c of independent){
+     const recs=state.history.filter(h=>h.catId===c.id).sort(compareHistory);
+     for(const h of recs)rows.push([c.name,h.date,h.content||'—',studentExportStatusText(h,seat)]);
+   }
+ }
+ return rows;
+}
+function studentSummaryRows(seats){
+ // alpha.44：匯出給老師查閱的彙總表只保留實際需要的紀錄欄位，
+ // 不再輸出「連續作業／獨立項目」這個系統分類欄。
+ const rows=[['座號','類別','日期','進度／標題','狀態']];
+ const cats=state.categories.filter(c=>studentHasAnyHistory(c.id));
+ for(const seat of seats){
+   for(const c of cats){
+     if(c.kind==='continuous'){
+       const h=latestRecord(c.id);if(h)rows.push([String(seat),c.name,h.date,h.content||'—',studentExportStatusText(h,seat)]);
+     }else{
+       const recs=state.history.filter(h=>h.catId===c.id).sort(compareHistory);
+       for(const h of recs)rows.push([String(seat),c.name,h.date,h.content||'—',studentExportStatusText(h,seat)]);
+     }
+   }
+ }
+ return rows;
+}
+function safeSheetName(name,used){
+ let base=String(name||'工作表').replace(/[\\/*?:\[\]]/g,' ').replace(/^'+|'+$/g,'').trim()||'工作表';
+ base=Array.from(base).slice(0,31).join('');let candidate=base,i=2;
+ while(used.has(candidate)){const suffix=`_${i++}`;candidate=Array.from(base).slice(0,31-suffix.length).join('')+suffix}
+ used.add(candidate);return candidate;
+}
+function worksheetXml(rows){
+ const sheetRows=rows.map((row,r)=>`<row r="${r+1}">${row.map((v,c)=>`<c r="${colName(c+1)}${r+1}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(v)}</t></is></c>`).join('')}</row>`).join('');
+ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
+}
+function downloadWorkbookXlsx(sheetSpecs,filename){
+ const used=new Set();
+ const sheets=sheetSpecs.map((x,i)=>({name:safeSheetName(x.name,used),rows:x.rows,index:i+1}));
+ const overrides=sheets.map(x=>`<Override PartName="/xl/worksheets/sheet${x.index}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('');
+ const workbookSheets=sheets.map(x=>`<sheet name="${xmlEscape(x.name)}" sheetId="${x.index}" r:id="rId${x.index}"/>`).join('');
+ const rels=sheets.map(x=>`<Relationship Id="rId${x.index}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${x.index}.xml"/>`).join('');
+ const files=[
+  {name:'[Content_Types].xml',text:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${overrides}</Types>`},
+  {name:'_rels/.rels',text:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+  {name:'xl/workbook.xml',text:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${workbookSheets}</sheets></workbook>`},
+  {name:'xl/_rels/workbook.xml.rels',text:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${rels}</Relationships>`},
+  ...sheets.map(x=>({name:`xl/worksheets/sheet${x.index}.xml`,text:worksheetXml(x.rows)}))
+ ];
+ const blob=makeStoredZip(files),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function currentStudentExportScope(){return document.querySelector('input[name="studentExportScope"]:checked')?.value||'current'}
+function syncStudentExportScope(){
+ const input=$('studentExportRange');if(!input)return;
+ const isRange=currentStudentExportScope()==='range';input.disabled=!isRange;
+ if(isRange)setTimeout(()=>input.focus(),0);
+ $('studentExportError').textContent='';
+}
+function toggleStudentExportPanel(force){
+ const panel=$('studentExportPanel');if(!panel)return;
+ const show=typeof force==='boolean'?force:panel.hidden;
+ panel.hidden=!show;$('studentExportError').textContent='';
+ if(show){
+   const current=document.querySelector('input[name="studentExportScope"][value="current"]');if(current)current.checked=true;
+   $('studentExportRange').value='';syncStudentExportScope();
+ }
+}
+function exportStudentRecordsExcel(){
+ const err=$('studentExportError');err.textContent='';
+ if(!state.history.length){err.textContent='目前尚無任何正式作業紀錄可匯出。';return}
+ let seats=[];const scope=currentStudentExportScope();
+ if(scope==='current')seats=[selectedStudentSeat];
+ else if(scope==='all')seats=Array.from({length:state.studentCount},(_,i)=>i+1);
+ else{
+   const parsed=parseStudentExportRange($('studentExportRange').value);
+   if(parsed.error){err.textContent=parsed.error;return}
+   seats=parsed.seats;
+ }
+ const sheets=[{name:'彙總',rows:studentSummaryRows(seats)},...seats.map(seat=>({name:`${String(seat).padStart(2,'0')}號`,rows:studentExportRows(seat)}))];
+ const rangeLabel=scope==='current'?`${String(selectedStudentSeat).padStart(2,'0')}號`:scope==='all'?'全班':`${Math.min(...seats)}-${Math.max(...seats)}號`;
+ downloadWorkbookXlsx(sheets,`學生個人作業紀錄_${rangeLabel}_${TODAY}.xlsx`);
+ toggleStudentExportPanel(false);
+}
+function overviewExportData(){
+ const cols=[];
+ for(const c of state.categories){
+   if(c.showOverview===false||!studentHasAnyHistory(c.id))continue;
+   if(c.kind==='continuous'){
+     const h=latestRecord(c.id);
+     if(h)cols.push({type:'continuous',c,h});
+   }else{
+     // 獨立項目：每一筆正式紀錄各自成為 Excel 一欄，避免把多篇作品塞在同一格。
+     const recs=state.history.filter(h=>h.catId===c.id).sort(compareHistory);
+     for(const h of recs)cols.push({type:'independent',c,h});
+   }
+ }
+ const rows=[
+   ['座號',...cols.map(({c})=>c.name)],
+   ['進度／標題',...cols.map(({c,h})=>{
+     if(h.content)return h.content;
+     const custom=cleanText(h.workLabel||'',6);
+     return custom||fmtDate(h.date);
+   })]
+ ];
+ for(let n=1;n<=state.studentCount;n++){
+   rows.push([String(n),...cols.map(({type,h})=>{
+     if(type==='continuous')return excelCellTextForContinuous(h,n);
+     const st=h.statuses?.[n]||'red';
+     // 獨立項目逐筆顯示自己的狀態；已補登完成則保留原狀態並加 OK。
+     const labels={blue:'通過',red:'未交／未寫',green:'未簽',ring:'未訂簽',yellow:'未訂正',orange:'請假'};
+     let t=labels[st]||'未交／未寫';
+     if(isStatusFullyResolved(h,n))t+=' OK';
+     else if(st==='ring'){
+       const p=resolvedPartState(h,n);
+       if(p.correction&&!p.signature)t+=' 訂OK';
+       if(p.signature&&!p.correction)t+=' 簽OK';
+     }
+     return t;
+   })]);
+ }
+ return rows;
+}
+function xmlEscape(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[m]))}
+function crc32(bytes){let c=0xffffffff;for(const b of bytes){c^=b;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0)}return(c^0xffffffff)>>>0}
+function u16(n){return[n&255,(n>>>8)&255]}
+function u32(n){return[n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]}
+function makeStoredZip(files){
+ const enc=new TextEncoder(),chunks=[],central=[];let offset=0;
+ for(const f of files){
+   const name=enc.encode(f.name),data=enc.encode(f.text),crc=crc32(data);
+   const local=new Uint8Array([0x50,0x4b,0x03,0x04,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),0,0,...name]);
+   chunks.push(local,data);
+   const cent=new Uint8Array([0x50,0x4b,0x01,0x02,20,0,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),0,0,0,0,0,0,0,0,0,0,0,0,...u32(offset),...name]);
+   central.push(cent);offset+=local.length+data.length;
+ }
+ const centralSize=central.reduce((s,x)=>s+x.length,0),centralOffset=offset;
+ const end=new Uint8Array([0x50,0x4b,0x05,0x06,0,0,0,0,...u16(files.length),...u16(files.length),...u32(centralSize),...u32(centralOffset),0,0]);
+ return new Blob([...chunks,...central,end],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function colName(n){let s='';while(n){n--;s=String.fromCharCode(65+n%26)+s;n=Math.floor(n/26)}return s}
+function exportOverviewExcel(){
+ const rows=overviewExportData();
+ if(rows[0].length<=1)return alert('目前沒有可匯出的正式作業紀錄。');
+ const sheetRows=rows.map((row,r)=>`<row r="${r+1}">${row.map((v,c)=>`<c r="${colName(c+1)}${r+1}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(v)}</t></is></c>`).join('')}</row>`).join('');
+ const files=[
+  {name:'[Content_Types].xml',text:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`},
+  {name:'_rels/.rels',text:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+  {name:'xl/workbook.xml',text:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="作業最新進度總覽" sheetId="1" r:id="rId1"/></sheets></workbook>`},
+  {name:'xl/_rels/workbook.xml.rels',text:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`},
+  {name:'xl/worksheets/sheet1.xml',text:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`}
+ ];
+ const blob=makeStoredZip(files),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=`作業最新進度總覽_${TODAY}.xlsx`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+const OVERVIEW_VIEW_MODE_KEY='hwOverviewViewModeV1';
+function setOverviewViewMode(mode,save=true){
+ const sticky=mode==='sticky';
+ const panel=$('overviewPanel');
+ if(!panel)return;
+ panel.classList.toggle('overview-sticky-mode',sticky);
+ const expandBtn=$('overviewExpandBtn'),stickyBtn=$('overviewStickyBtn');
+ if(expandBtn){expandBtn.classList.toggle('active',!sticky);expandBtn.setAttribute('aria-pressed',String(!sticky))}
+ if(stickyBtn){stickyBtn.classList.toggle('active',sticky);stickyBtn.setAttribute('aria-pressed',String(sticky))}
+ if(save){try{localStorage.setItem(OVERVIEW_VIEW_MODE_KEY,sticky?'sticky':'expanded')}catch{}}
+}
+function restoreOverviewViewMode(){
+ let mode='expanded';
+ try{mode=localStorage.getItem(OVERVIEW_VIEW_MODE_KEY)==='sticky'?'sticky':'expanded'}catch{}
+ setOverviewViewMode(mode,false);
+}
+
+function renderOverview(){
+ const cols=state.categories.filter(c=>c.showOverview!==false&&studentHasAnyHistory(c.id)).map(c=>({c,h:latestRecord(c.id)})).filter(x=>x.h);
+ $('overviewHead').innerHTML=`<tr><th class="seat-col">類別</th>${cols.map(({c})=>`<th class="cat-head">${esc(c.name)}${c.kind==='independent'?'<span class="independent-badge" title="獨立項目" aria-label="獨立項目">獨</span>':''}</th>`).join('')}</tr><tr><th class="seat-col axis-text">座號＼日期</th>${cols.map(({c,h})=>`<th class="date-head">${c.kind==='independent'?independentWorkTags(c.id):fmtDate(h.date)}</th>`).join('')}</tr>`;
+ let rows='';
+ for(let n=1;n<=state.studentCount;n++){
+   let cells='';
+   for(const {c,h} of cols){
+     if(c.kind==='independent'){
+       cells+=`<td>${independentOverviewCell(c.id,n)}</td>`;
+     }else if(isWholeClassOK(h)){
+       if(n===1)cells+=`<td class="all-ok-cell" rowspan="${state.studentCount}"><span class="all-ok-stamp">OK</span></td>`;
+     }else{
+       cells+=`<td>${statusIcon(h.statuses[n]||'red',isStatusFullyResolved(h,n),resolvedPartState(h,n))}</td>`;
+     }
+   }
+   rows+=`<tr><td class="seat-col">${n}</td>${cells}</tr>`;
+ }
+ $('overviewBody').innerHTML=rows||'<tr><td class="seat-col">—</td><td class="small">尚無作業紀錄</td></tr>';
+ $('overviewHead').querySelectorAll('[data-work-label-id]').forEach(tag=>{
+   tag.addEventListener('dblclick',()=>editIndependentWorkLabel(String(tag.dataset.workLabelId||'')));
+ });
+}
+function previewManualHistoryOK(h,seat){
+ const actual=isStatusFullyResolved(h,seat);
+ if(historyOkEditId===h.id&&historyOkPending.has(seat))return !actual;
+ return actual;
+}
+function previewManualHistoryParts(h,seat){
+ if(historyOkEditId===h.id&&historyOkPending.has(seat)){
+   return isStatusFullyResolved(h,seat)?{}:{missing:true,correction:true,signature:true};
+ }
+ return resolvedPartState(h,seat);
+}
+function toggleManualHistoryOK(historyId,seat){
+ const h=state.history.find(x=>x.id===historyId);if(!h||historyOkEditId!==historyId)return;
+ const c=state.categories.find(x=>x.id===h.catId);
+ if(!c)return;
+ const st=h.statuses?.[seat];
+ if(!['red','yellow','green','ring','orange'].includes(st))return;
+ if(historyOkPending.has(seat))historyOkPending.delete(seat);else historyOkPending.add(seat);
+ renderTable();
+}
+function commitHistoryOkEdits(){
+ if(!historyOkEditId)return;
+ const h=state.history.find(x=>x.id===historyOkEditId);
+ if(h){
+   h.resolved||={};h.resolvedParts||={};h.manualResolved||={};
+   for(const seat of historyOkPending){
+     const st=h.statuses?.[seat];
+     if(!['red','yellow','green','ring','orange'].includes(st))continue;
+     if(isStatusFullyResolved(h,seat)){
+       delete h.resolved[seat];delete h.resolvedParts[seat];delete h.manualResolved[seat];
+     }else{
+       h.resolved[seat]=true;
+       h.resolvedParts[seat]={missing:true,correction:true,signature:true};
+       h.manualResolved[seat]=true;
+     }
+   }
+   if(historyOkPending.size){h.updated=Date.now();const c=state.categories.find(x=>x.id===h.catId);if(c?.kind==='continuous')recomputeContinuousResolutions(h.catId);save()}
+ }
+ historyOkPending.clear();historyOkEditId='';
+ renderTable();renderOverview();renderCats();
+}
+function toggleHistoryOkEdit(id){
+ if(historyOkEditId===id){commitHistoryOkEdits();return}
+ if(historyOkEditId&&historyOkPending.size)commitHistoryOkEdits();
+ historyOkEditId=id;historyOkPending.clear();renderTable();
+}
+
+
+function cancelHistoryRecordEdit(render=true){
+ historyEditId='';historyEditDraft=null;historyEditOriginalManual={};
+ selectedStudents.clear();progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
+ if(render){renderProgress();renderHistoryMainEditBanner();renderStudentGrid();renderTable();renderCurrentCategorySummary()}
+}
+function startHistoryRecordEdit(id){
+ const h=state.history.find(x=>x.id===id);if(!h)return;
+ if(historyOkEditId){historyOkEditId='';historyOkPending.clear()}
+ historyEditId=id;historyEditDraft={};
+ for(let n=1;n<=state.studentCount;n++)historyEditDraft[n]=h.statuses?.[n]||'red';
+ historyEditOriginalManual={...(h.manualResolved||{})};
+ state.currentCategory=h.catId;
+ $('recordDate').value=h.date;
+ const entryBody=$('homeworkEntryBody'),entryBtn=$('homeworkEntryCollapseBtn');
+ if(entryBody)entryBody.classList.remove('collapsed');
+ if(entryBtn){entryBtn.textContent='收起 ▲';entryBtn.setAttribute('aria-expanded','true')}
+ progress=progressFromHistory(h);
+ selectedStudents.clear();
+ renderAll();
+ $('studentGrid')?.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function saveHistoryRecordFromMain(){
+ const h=state.history.find(x=>x.id===historyEditId);
+ if(!h)return cancelHistoryRecordEdit();
+ const date=$('recordDate').value||TODAY,pr=buildContent();
+ if(!validDate(date))return alert('登記日期不正確，請重新選擇日期。');
+ if(pr.error){
+   renderProgressValidation();
+   const msg=progressErrorText(pr);
+   $('progressValidationMsg')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+   if(msg)alert(msg);
+   return;
+ }
+ h.date=date;h.content=pr.content;h.progressType=pr.type;h.statuses={};
+ for(let n=1;n<=state.studentCount;n++){
+   const st=historyEditDraft?.[n]||'red';h.statuses[n]=VALID_STATUS.has(st)?st:'red';
+ }
+ h.manualResolved={};
+ for(const [seat,flag] of Object.entries(historyEditOriginalManual||{})){
+   const st=h.statuses?.[seat];
+   if(flag===true&&['red','yellow','green','ring','orange'].includes(st))h.manualResolved[seat]=true;
+ }
+ h.updated=nextUpdatedStamp();
+ const c=state.categories.find(x=>x.id===h.catId);
+ if(c?.kind==='continuous')recomputeContinuousResolutions(h.catId);
+ else{
+   h.resolved={};h.resolvedParts={};
+   for(const seat of Object.keys(h.manualResolved)){h.resolved[seat]=true;h.resolvedParts[seat]={missing:true,correction:true,signature:true}}
+ }
+ save();
+ historyEditId='';historyEditDraft=null;historyEditOriginalManual={};
+ selectedStudents.clear();progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
+ renderAll();
+}
+function renderTable(){
+ const c=currentCat(),cols=state.history.filter(h=>h.catId===c.id).sort(compareHistory);
+ const headRow=document.createElement('tr');
+ const corner=document.createElement('th');corner.className='diag-head';
+ const prog=document.createElement('span');prog.className='diag-progress';prog.textContent='進度';
+ const seat=document.createElement('span');seat.className='diag-seat';seat.textContent='座號';
+ corner.append(prog,seat);headRow.appendChild(corner);
+ cols.forEach((h,i)=>{
+   const th=document.createElement('th');if(i===0)th.className='latest-col';
+   const progressDiv=document.createElement('div');progressDiv.className='history-progress-box';progressDiv.innerHTML=progressHTML(h);
+   const dateDiv=document.createElement('div');dateDiv.textContent=h.date;
+   const controls=document.createElement('div');controls.style.cssText='display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:5px';
+   const recordEdit=document.createElement('button');
+   recordEdit.type='button';recordEdit.className=`btn history-record-edit-btn ${historyEditId===h.id?'active':''}`;
+   recordEdit.style.cssText='padding:4px 7px;font-size:11px';
+   recordEdit.textContent=historyEditId===h.id?'編輯中':'編輯紀錄';
+   recordEdit.title='把這筆歷史資料載入上方一般登記區修改';
+   recordEdit.disabled=historyEditId===h.id;
+   recordEdit.addEventListener('click',()=>startHistoryRecordEdit(h.id));
+   controls.appendChild(recordEdit);
+   {
+     const okEdit=document.createElement('button');
+     okEdit.type='button';okEdit.className=`btn history-ok-edit-btn ${historyOkEditId===h.id?'active':''} ${historyOkEditId===h.id&&historyOkPending.size?'has-pending':''}`;
+     okEdit.style.cssText='padding:4px 7px;font-size:11px';
+     okEdit.textContent=historyOkEditId===h.id?'補登完成':'補登 OK';
+     okEdit.title=historyOkEditId===h.id?'批次選好座號後，按此儲存補登結果':'進入補登模式，可一次點選多個座號後再儲存';
+     okEdit.disabled=!!historyEditId;okEdit.addEventListener('click',()=>toggleHistoryOkEdit(h.id));
+     controls.appendChild(okEdit);
+   }
+   const del=document.createElement('button');
+   del.type='button';del.className='btn danger history-delete-btn';
+   del.style.cssText='padding:4px 7px;font-size:11px';
+   del.textContent='刪除此筆';
+   del.addEventListener('click',()=>showHistoryDeleteConfirm(h));
+   controls.appendChild(del);
+   th.append(progressDiv,dateDiv,controls);headRow.appendChild(th);
+ });
+ $('tableHead').replaceChildren(headRow);
+ let rows='';
+ for(let n=1;n<=state.studentCount;n++){
+   let cells='';
+   for(let i=0;i<cols.length;i++){
+     const h=cols[i],latest=i===0?'latest-col':'';
+     if(isWholeClassOK(h)){if(n===1)cells+=`<td class="${latest} all-ok-cell" rowspan="${state.studentCount}"><span class="all-ok-stamp">OK</span></td>`}
+     else{
+       const st=h.statuses[n]||'red';
+       const editable=historyOkEditId===h.id&&['red','yellow','green','ring','orange'].includes(st);
+       const pending=editable&&historyOkPending.has(n);
+       cells+=`<td class="${latest} ${editable?'ok-editable':''} ${pending?'pending-toggle':''}"${editable?` data-history-id="${esc(h.id)}" data-seat="${n}"`:''}>${statusIcon(st,previewManualHistoryOK(h,n),previewManualHistoryParts(h,n))}</td>`;
+     }
+   }
+   rows+=`<tr><td>${n}</td>${cells}</tr>`;
+ }
+ $('tableBody').innerHTML=rows;
+ $('tableBody').querySelectorAll('td.ok-editable').forEach(td=>{
+   td.addEventListener('click',()=>{
+     const id=String(td.dataset.historyId||''),seat=Number(td.dataset.seat);
+     if(SAFE_ID.test(id)&&Number.isInteger(seat))toggleManualHistoryOK(id,seat);
+   });
+ });
+}
+function showHistoryDeleteConfirm(h){
+ const existing=$('historyDeleteConfirm');
+ if(existing)existing.remove();
+ const c=state.categories.find(x=>x.id===h.catId);
+ const label=`${c?.name||''}${h.content?'｜'+h.content:''}｜${h.date}`;
+
+ const box=document.createElement('div');
+ box.id='historyDeleteConfirm';box.className='history-delete-confirm';
+ const msg=document.createElement('span');
+ msg.textContent=`確定刪除「${label}」這筆紀錄嗎？`;
+ const actions=document.createElement('span');actions.className='history-delete-actions';
+ const cancel=document.createElement('button');
+ cancel.type='button';cancel.className='btn';cancel.textContent='取消';
+ cancel.addEventListener('click',()=>box.remove());
+ const ok=document.createElement('button');
+ ok.type='button';ok.className='btn danger';ok.textContent='確定刪除';
+ ok.addEventListener('click',()=>deleteHistory(h.id));
+ actions.append(cancel,ok);box.append(msg,actions);
+
+ const wrap=document.querySelector('.history-table-wrap');
+ if(wrap)wrap.parentNode.insertBefore(box,wrap);else $('tableHead').parentElement.before(box);
+ box.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function deleteHistory(id){
+ if(!SAFE_ID.test(String(id||'')))return;
+ const idx=state.history.findIndex(x=>x.id===id);
+ if(idx<0)return;
+ const deletedCatId=state.history[idx].catId;
+ state.history.splice(idx,1);
+ if(historyOkEditId===id){historyOkEditId='';historyOkPending.clear();}
+ if(historyEditId===id)cancelHistoryRecordEdit(false)
+ recomputeContinuousResolutions(deletedCatId);
+ save();
+ const box=$('historyDeleteConfirm');if(box)box.remove();
+ renderAll();
+}
+function setContactSeatStatus(n,status){
+ if(status==='orange'){
+   if(!state.contact.leave.includes(n))state.contact.leave.push(n);
+   // 保留底層狀態，取消請假時可恢復。
+ }else{
+   state.contact.leave=state.contact.leave.filter(x=>x!==n);
+   state.contact.statuses[n]=status;
+ }
+}
+function renderContact(){
+ refreshToday();
+ if(state.contact.date!==TODAY){
+   // 換日自動開始新的聯絡簿，不需手動清除前一天。
+   state.contact={date:TODAY,statuses:{},leave:[]};
+   selectedContactStudents.clear();
+   save();
+   const summary=$('contactSummary');
+   if(summary)summary.classList.add('hidden');
+ }
+ const g=$('contactGrid');g.innerHTML='';
+ for(let n=1;n<=state.studentCount;n++){
+   const isLeave=state.contact.leave.includes(n);
+   const hasExplicit=isLeave||Object.prototype.hasOwnProperty.call(state.contact.statuses,n);
+   const st=isLeave?'orange':(state.contact.statuses[n]||'red');
+   const b=document.createElement('button');
+   b.type='button';
+   b.className=`num ${st} ${selectedContactStudents.has(n)?'selected':''}`;
+   b.textContent=n;
+   b.addEventListener('click',()=>{
+     // 尚未登記：點一次直接「已交」。
+     if(!hasExplicit){
+       setContactSeatStatus(n,'blue');
+       selectedContactStudents.delete(n);
+       save();renderContact();return;
+     }
+     // 已經有狀態：只選取／取消選取，再用上方按鈕改狀態。
+     selectedContactStudents.has(n)?selectedContactStudents.delete(n):selectedContactStudents.add(n);
+     renderContact();
+   });
+   g.appendChild(b);
+ }
+ const leaveRow=$('leaveRow');
+ if(leaveRow){
+   leaveRow.innerHTML='';
+   for(let n=1;n<=state.studentCount;n++){
+     const chip=document.createElement('button');
+     chip.type='button';
+     chip.className=`leave-chip ${state.contact.leave.includes(n)?'active':''}`;
+     chip.textContent=n;
+     chip.setAttribute('aria-pressed',state.contact.leave.includes(n)?'true':'false');
+     chip.addEventListener('click',()=>toggleContactLeave(n));
+     leaveRow.appendChild(chip);
+   }
+ }
+}
+function toggleContactLeave(n){
+ if(state.contact.leave.includes(n)){
+   state.contact.leave=state.contact.leave.filter(x=>x!==n);
+ }else{
+   state.contact.leave.push(n);
+   // 不刪除請假前狀態。
+ }
+ selectedContactStudents.delete(n);
+ save();
+ renderContact();
+ if(($('recordDate').value||TODAY)===TODAY)renderStudentGrid();
+}
+function applyContactStatusToSelected(){
+ if(!selectedContactStudents.size)return;
+ selectedContactStudents.forEach(n=>setContactSeatStatus(n,selectedContactStatus));
+ selectedContactStudents.clear();
+ save();renderContact();
+ if(($('recordDate').value||TODAY)===TODAY)renderStudentGrid();
+}
+document.querySelectorAll('.contact-status-btn').forEach(btn=>btn.addEventListener('click',()=>{
+ selectedContactStatus=btn.dataset.contactStatus;
+ document.querySelectorAll('.contact-status-btn').forEach(b=>b.classList.toggle('active',b===btn));
+ if(selectedContactStudents.size)applyContactStatusToSelected();
+}));
+function clearContactRecord(){
+ refreshToday();
+ // 只清除本次聯絡簿登記；請假是當日共用資訊，予以保留。
+ const keepLeave=state.contact.date===TODAY?[...state.contact.leave]:[];
+ state.contact={date:TODAY,statuses:{},leave:keepLeave};
+ selectedContactStudents.clear();
+ save();renderContact();
+ $('contactSummary').classList.add('hidden');
+ if(($('recordDate').value||TODAY)===TODAY)renderStudentGrid();
+}
+function finishContact(){
+ const red=[],green=[],yellow=[],leave=[...state.contact.leave].sort((a,b)=>a-b);
+ for(let n=1;n<=state.studentCount;n++){
+   if(leave.includes(n))continue;
+   const st=state.contact.statuses[n]||'red';
+   if(st==='red')red.push(n);else if(st==='green')green.push(n);else if(st==='yellow')yellow.push(n);
+ }
+ let x=`<h4>今日聯絡簿｜${TODAY}</h4>`;
+ if(red.length)x+=`<div class="summary-line"><span class="dot red"></span><b>未交：</b>${red.join('、')}</div>`;
+ if(green.length)x+=`<div class="summary-line"><span class="dot green"></span><b>未簽：</b>${green.join('、')}</div>`;
+ if(yellow.length)x+=`<div class="summary-line"><span class="dot yellow"></span><b>未完成：</b>${yellow.join('、')}</div>`;
+ if(leave.length)x+=`<div class="summary-line"><span class="dot orange"></span><b>請假：</b>${leave.join('、')}</div>`;
+ if(!red.length&&!green.length&&!yellow.length&&!leave.length)x+='<div class="small">目前沒有需要追蹤的座號。</div>';
+ $('contactSummary').innerHTML=x;$('contactSummary').classList.remove('hidden');save();
+}
+let contactCollapsed=false;
+function setContactCollapsed(collapsed){
+ contactCollapsed=!!collapsed;
+ const body=$('contactBody'),btn=$('contactCollapseBtn');
+ body.classList.toggle('collapsed',contactCollapsed);
+ btn.textContent=contactCollapsed?'展開 ▼':'收起 ▲';
+ btn.setAttribute('aria-expanded',contactCollapsed?'false':'true');
+}
+$('mobileMoreBtn').addEventListener('click',()=>{
+ const menu=$('mobileMoreMenu'),btn=$('mobileMoreBtn'),show=!menu.classList.contains('show');
+ menu.classList.toggle('show',show);btn.textContent=show?'更多 ▴':'更多 ▾';btn.setAttribute('aria-expanded',show?'true':'false');
+});
+$('mobileCategoryToggleBtn').addEventListener('click',()=>{mobileCategoriesCollapsed=!mobileCategoriesCollapsed;updateMobileCategoryUI()});
+syncMobileUXClass();
+setupMobileTopbar();
+window.addEventListener('resize',()=>{syncMobileUXClass();setupMobileTopbar();updateMobileCategoryUI()});
+window.addEventListener('orientationchange',()=>setTimeout(()=>{syncMobileUXClass();setupMobileTopbar();updateMobileCategoryUI()},80));
+$('contactCollapseBtn').addEventListener('click',()=>setContactCollapsed(!contactCollapsed));
+$('homeworkEntryCollapseBtn').addEventListener('click',()=>{
+ const body=$('homeworkEntryBody'),btn=$('homeworkEntryCollapseBtn');
+ const collapsed=!body.classList.contains('collapsed');
+ body.classList.toggle('collapsed',collapsed);
+ btn.textContent=collapsed?'展開 ▼':'收起 ▲';
+ btn.setAttribute('aria-expanded',collapsed?'false':'true');
+});
+setInterval(()=>{
+ const before=TODAY;
+ refreshToday();
+ if(TODAY!==before){
+   renderContact();
+   if($('recordDate').value===before)$('recordDate').value=TODAY;
+   renderStudentGrid();
+ }
+},60000);
+$('clearContactBtn').addEventListener('click',clearContactRecord);
+$('finishContactBtn').addEventListener('click',finishContact);
+function applyStudentCount(){let v=parseInt($('studentCount').value,10);if(!Number.isInteger(v))v=27;v=Math.max(1,Math.min(60,v));$('studentCount').value=v;state.studentCount=v;save();selectedStudents.clear();selectedContactStudents.clear();renderAll();$('countFeedback').textContent=`已套用：1～${v} 號`;setTimeout(()=>{$('countFeedback').textContent=''},1800)}
+
+function toggleCloudPanel(force){
+ const panel=$('cloudPanel'),btn=$('cloudToggleBtn');
+ const show=typeof force==='boolean'?force:!panel.classList.contains('show');
+ panel.classList.toggle('show',show);panel.setAttribute('aria-hidden',String(!show));
+ btn.setAttribute('aria-expanded',String(show));
+}
+$('cloudToggleBtn').addEventListener('click',()=>toggleCloudPanel());
+$('cloudCloseBtn').addEventListener('click',()=>toggleCloudPanel(false));
+$('cloudSignInBtn').addEventListener('click',()=>window.hwCloud?.signIn?.());
+$('cloudSignOutBtn').addEventListener('click',()=>window.hwCloud?.signOut?.());
+$('cloudUploadBtn').addEventListener('click',()=>window.hwCloud?.manualUpload?.());
+$('cloudDownloadBtn').addEventListener('click',()=>window.hwCloud?.manualDownload?.());
+$('cloudMergeBtn').addEventListener('click',()=>window.hwCloud?.manualMerge?.());
+$('studentSortCategoryBtn').addEventListener('click',()=>setStudentRecordSortMode('category'));
+$('studentSortPendingBtn').addEventListener('click',()=>setStudentRecordSortMode('pending'));
+$('studentExcelBtn').addEventListener('click',()=>toggleStudentExportPanel());
+document.querySelectorAll('input[name="studentExportScope"]').forEach(r=>r.addEventListener('change',syncStudentExportScope));
+$('studentExportCancelBtn').addEventListener('click',()=>toggleStudentExportPanel(false));
+$('studentExportDoBtn').addEventListener('click',exportStudentRecordsExcel);
+$('studentExportRange').addEventListener('keydown',e=>{if(e.key==='Enter'&&!$('studentExportRange').disabled)exportStudentRecordsExcel()});
+$('studentToggleBtn').addEventListener('click',()=>toggleStudentPanel());
+$('studentCloseBtn').addEventListener('click',()=>toggleStudentPanel(false));
+$('overviewExpandBtn').addEventListener('click',()=>setOverviewViewMode('expanded'));
+$('overviewStickyBtn').addEventListener('click',()=>setOverviewViewMode('sticky'));
+restoreOverviewViewMode();
+$('overviewExcelBtn').addEventListener('click',exportOverviewExcel);
+$('overviewToggleBtn').addEventListener('click',()=>toggleOverview());
+$('overviewCloseBtn').addEventListener('click',()=>toggleOverview(false));
+$('clearHomeworkBtn').addEventListener('click',clearCurrentDraft);
+$('markAllPassBtn').addEventListener('click',markAllPass);
+$('updateHomeworkBtn').addEventListener('click',updateHomework);
+$('applyCountBtn').addEventListener('click',applyStudentCount);$('studentCount').addEventListener('keydown',e=>{if(e.key==='Enter')applyStudentCount()});
+async function exportData(){
+ const btn=$('exportBtn');
+ const original=btn.textContent;
+ try{
+   btn.disabled=true;
+   btn.textContent='準備備份…';
+
+   // Export a validated snapshot, not raw/untrusted browser data.
+   const safe=sanitizeState(state);
+   const payload=JSON.stringify(safe,null,2);
+   const stamp=new Date().toISOString().slice(0,10).replace(/-/g,'');
+   const filename=`作業點名簿＋_備份_${stamp}.json`;
+
+   // Preferred path on Chromium/Edge: this opens a real "save as" dialog
+   // directly from the user's click, avoiding blocked synthetic downloads.
+   if(typeof window.showSaveFilePicker==='function'){
+     const handle=await window.showSaveFilePicker({
+       suggestedName:filename,
+       types:[{description:'JSON 備份檔',accept:{'application/json':['.json']}}]
+     });
+     const writable=await handle.createWritable();
+     await writable.write(payload);
+     await writable.close();
+     btn.textContent='✓ 已匯出';
+     setTimeout(()=>{btn.textContent=original;btn.disabled=false},1400);
+     return;
+   }
+
+   // Compatibility fallback for browsers without showSaveFilePicker.
+   const blob=new Blob([payload],{type:'application/json;charset=utf-8'});
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement('a');
+   a.href=url;a.download=filename;a.style.display='none';
+   document.body.appendChild(a);
+   a.click();
+   setTimeout(()=>{a.remove();URL.revokeObjectURL(url)},1000);
+   btn.textContent='✓ 已送出下載';
+   setTimeout(()=>{btn.textContent=original;btn.disabled=false},1400);
+ }catch(err){
+   btn.disabled=false;btn.textContent=original;
+   // AbortError means the user cancelled the save dialog; no error alert needed.
+   if(err&&err.name==='AbortError')return;
+   console.error('匯出備份失敗',err);
+   alert('匯出備份失敗。若瀏覽器有封鎖下載或檔案權限提示，請允許後再試一次。');
+ }
+}
+$('exportBtn').addEventListener('click',exportData);
+function importCatKey(c){return cleanText(c?.name||'',30).trim().replace(/\s+/g,' ').toLocaleLowerCase('zh-Hant')}
+function mergeImportedBackup(localRaw,backupRaw){
+ const local=sanitizeState(localRaw,true),backup=sanitizeState(backupRaw,false);
+ const categories=(local.categories||[]).map(c=>({...c}));
+ const byId=new Map(categories.map(c=>[c.id,c]));
+ const byName=new Map(categories.map(c=>[importCatKey(c),c]));
+ const backupCatMap=new Map();
+ for(const c of backup.categories||[]){
+   let target=byId.get(c.id)||byName.get(importCatKey(c));
+   if(!target){
+     let id=c.id,seq=1;
+     while(byId.has(id))id=`${c.id}_backup_${seq++}`;
+     target={...c,id};categories.push(target);byId.set(id,target);byName.set(importCatKey(target),target);
+   }
+   backupCatMap.set(c.id,target.id);
+ }
+ const validCatIds=new Set(categories.map(c=>c.id));
+ const historyMap=new Map();
+ for(const h of local.history||[])if(validCatIds.has(h.catId))historyMap.set(h.id,{...h});
+ let added=0,conflicts=0,backupWon=0;
+ for(const rawH of backup.history||[]){
+   const catId=backupCatMap.get(rawH.catId)||rawH.catId;if(!validCatIds.has(catId))continue;
+   const h={...rawH,catId};
+   const old=historyMap.get(h.id);
+   if(!old){historyMap.set(h.id,h);added++;continue}
+   if(JSON.stringify(old)===JSON.stringify(h))continue;
+   conflicts++;
+   if(Number(h.updated||0)>Number(old.updated||0)){historyMap.set(h.id,h);backupWon++}
+ }
+ const history=[...historyMap.values()].sort((a,b)=>Number(a.updated||0)-Number(b.updated||0));
+ let contact;
+ if(local.contact?.date===backup.contact?.date){
+   contact={date:local.contact.date,statuses:{...(backup.contact?.statuses||{}),...(local.contact?.statuses||{})},leave:[...new Set([...(backup.contact?.leave||[]),...(local.contact?.leave||[])])].sort((a,b)=>a-b)};
+ }else contact=(String(local.contact?.date||'')>=String(backup.contact?.date||''))?local.contact:backup.contact;
+ const currentCategory=validCatIds.has(local.currentCategory)?local.currentCategory:(categories[0]?.id||'c0');
+ const merged={studentCount:Math.max(Number(local.studentCount||0),Number(backup.studentCount||0),1),categories,currentCategory,history,contact,drafts:local.drafts||{}};
+ return {state:sanitizeState(merged,true),added,conflicts,backupWon,newCategories:categories.length-(local.categories||[]).length};
+}
+function showImportConfirm(raw,fileName){
+ const old=$('importConfirmBox');if(old)old.remove();
+ const box=document.createElement('div');box.id='importConfirmBox';box.className='import-confirm-box';
+ const msg=document.createElement('span');msg.textContent=`準備匯入「${cleanText(fileName,80)}」。你可以安全合併，或用備份完整取代目前資料。`;
+ const actions=document.createElement('span');actions.className='import-confirm-actions';
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='btn';cancel.textContent='取消';
+ const merge=document.createElement('button');merge.type='button';merge.className='btn primary';merge.textContent='安全合併';
+ const replace=document.createElement('button');replace.type='button';replace.className='btn danger';replace.textContent='覆蓋目前資料';
+ cancel.addEventListener('click',()=>box.remove());
+ merge.addEventListener('click',()=>{
+   const result=mergeImportedBackup(state,raw);
+   const detail=`會新增 ${result.added} 筆備份紀錄${result.newCategories?`、${result.newCategories} 個新類別`:''}。`+(result.conflicts?`\n同一筆紀錄有 ${result.conflicts} 筆內容不同，其中 ${result.backupWon} 筆備份版本較新；其餘保留目前版本。`:'');
+   if(!confirm(`安全合併不會整份覆蓋目前資料，也會保留這台裝置的臨時草稿。\n\n${detail}\n\n確定進行安全合併嗎？`))return;
+   state=result.state;recomputeAllContinuousResolutions();save();progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
+   selectedStudents.clear();selectedContactStudents.clear();box.remove();renderAll();
+   alert('備份已安全合併完成；目前資料與備份中不同的正式紀錄都已整合。');
+ });
+ replace.addEventListener('click',()=>{
+   if(!confirm('覆蓋目前資料會以備份內容完整取代目前正式紀錄；目前尚未同步或較新的正式資料可能消失。\n\n確定仍要覆蓋嗎？'))return;
+   state=sanitizeState(raw);recomputeAllContinuousResolutions();save();progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
+   selectedStudents.clear();selectedContactStudents.clear();box.remove();renderAll();
+   alert('備份已檢查並覆蓋匯入完成。');
+ });
+ actions.append(cancel,merge,replace);box.append(msg,actions);
+ const header=document.querySelector('.topbar');header.insertAdjacentElement('afterend',box);
+ box.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+$('importFile').addEventListener('change',e=>{
+ const f=e.target.files[0];e.target.value='';
+ if(!f)return;
+ if(f.size>1024*1024)return alert('備份檔超過 1 MB，為安全起見已拒絕匯入。');
+ if(!f.name.toLowerCase().endsWith('.json'))return alert('只接受 JSON 備份檔。');
+ const r=new FileReader();
+ r.onload=()=>{try{const raw=JSON.parse(String(r.result));showImportConfirm(raw,f.name)}catch{alert('備份檔格式不正確，未匯入任何資料。')}};
+ r.onerror=()=>alert('讀取備份檔失敗，未匯入任何資料。');
+ r.readAsText(f);
+});
+recomputeAllContinuousResolutions();saveLocalOnly();renderAll();
+</script>
+
+<script type="module">
+/*
+  作業點名簿＋ Firebase 雲端同步
+  ------------------------------------------------------------
+  啟用方式：
+  1. 在 Firebase 專案新增 Web App。
+  2. 啟用 Authentication > Google。
+  3. 建立 Cloud Firestore，並套用隨附 firestore.rules。
+  4. 將下方 FIREBASE_CONFIG 的 null，替換成 Firebase 控制台提供的 Web 設定物件。
+     Firebase Web 設定會公開在前端，安全性必須靠 Authentication + Firestore Rules，
+     絕對不要放服務帳戶金鑰、私密金鑰或任何密碼。
+*/
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDS9Cv31o7paiA7kehuQtpcIogYEuYpAkY",
+  authDomain: "homework-checker-5bdbb.firebaseapp.com",
+  projectId: "homework-checker-5bdbb",
+  storageBucket: "homework-checker-5bdbb.firebasestorage.app",
+  messagingSenderId: "40901023423",
+  appId: "1:40901023423:web:8252429881904866ac580a"
+};
+// 範例格式（請勿照抄）：
+// const FIREBASE_CONFIG = {apiKey:"...",authDomain:"...",projectId:"...",appId:"..."};
+
+const ui={
+ short:document.getElementById('cloudStatusShort'),
+ long:document.getElementById('cloudStatusLong'),
+ dot:document.getElementById('cloudDot'),
+ signIn:document.getElementById('cloudSignInBtn'),
+ signOut:document.getElementById('cloudSignOutBtn'),
+ upload:document.getElementById('cloudUploadBtn'),
+ download:document.getElementById('cloudDownloadBtn'),
+ merge:document.getElementById('cloudMergeBtn'),
+ privateDevice:document.getElementById('cloudPrivateDevice'),
+ userLine:document.getElementById('cloudUserLine')
+};
+const bridge=window.hwCloudBridge;
+let firebaseReady=false,auth=null,db=null,currentUser=null,docRef=null,unsubscribe=null;
+let queueTimer=null,applyingRemote=false,lastRemoteToken='',baseRemoteToken='',pendingUploadToken='',cloudExists=false,syncConflict=false;
+const CLOUD_BASE_TOKEN_KEY='hwCheckerCloudBaseTokenV1';
+const CLOUD_DEVICE_ID_KEY='hwCheckerCloudDeviceIdV1';
+// Firestore 單一文件上限為 1 MiB。JSON 位元組數不是 Firestore 實際編碼大小，
+// 因此採保守門檻：700 KiB 起提醒、850 KiB 起禁止雲端寫入，保留安全緩衝。
+const CLOUD_WARN_BYTES=700*1024;
+const CLOUD_BLOCK_BYTES=850*1024;
+function estimateCloudBytes(state){
+ try{return new TextEncoder().encode(JSON.stringify({schema:1,state,ownerUid:currentUser?.uid||'',clientUpdatedAt:Date.now(),writer:DEVICE_ID})).length}
+ catch{return Number.POSITIVE_INFINITY}
+}
+function formatKiB(bytes){return Number.isFinite(bytes)?`${Math.ceil(bytes/1024)} KiB`:'無法估算'}
+function cloudSizeInfo(state){
+ const bytes=estimateCloudBytes(state);
+ return {bytes,warn:bytes>=CLOUD_WARN_BYTES,block:bytes>=CLOUD_BLOCK_BYTES};
+}
+function isLikelyNetworkError(err){
+ const code=String(err?.code||'').toLowerCase(),msg=String(err?.message||'').toLowerCase();
+ return ['unavailable','deadline-exceeded','network-request-failed','cancelled'].some(x=>code.includes(x))||/network|offline|internet|failed to fetch|connection/.test(msg);
+}
+function isLikelySizeWriteError(err){
+ const code=String(err?.code||'').toLowerCase(),msg=String(err?.message||'').toLowerCase();
+ return code.includes('resource-exhausted')||/maximum.*size|too large|document.*size|1048576|longer than/.test(msg);
+}
+function getDeviceId(){
+ let id=localStorage.getItem(CLOUD_DEVICE_ID_KEY)||'';
+ if(!id){
+   try{id=crypto.randomUUID()}catch{id='dev-'+Date.now()+'-'+Math.random().toString(36).slice(2)}
+   localStorage.setItem(CLOUD_DEVICE_ID_KEY,id);
+ }
+ return id;
+}
+const DEVICE_ID=getDeviceId();
+function persistedBaseToken(){return localStorage.getItem(CLOUD_BASE_TOKEN_KEY)||''}
+function rememberBaseToken(token){localStorage.setItem(CLOUD_BASE_TOKEN_KEY,String(token||''))}
+
+function setStatus(shortText,longText,kind=''){
+ if(ui.short)ui.short.textContent=shortText;
+ if(ui.long)ui.long.textContent=longText||shortText;
+ if(ui.dot)ui.dot.className='cloud-dot'+(kind?' '+kind:'');
+}
+function setButtons(){
+ const signed=!!currentUser;
+ if(ui.signIn)ui.signIn.disabled=!firebaseReady||signed;
+ if(ui.signOut)ui.signOut.disabled=!firebaseReady||!signed;
+ if(ui.upload)ui.upload.disabled=!signed;
+ if(ui.download)ui.download.disabled=!signed||!cloudExists;
+ if(ui.merge)ui.merge.disabled=!signed||!cloudExists||!syncConflict;
+ if(ui.userLine)ui.userLine.innerHTML=signed
+   ?`已登入：<span class="cloud-user">${String(currentUser.email||'Google 帳號').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}</span>`
+   :'';
+}
+function snapshotToken(snap){
+ const data=snap?.exists?.()?snap.data():null;
+ return data?String(data.clientUpdatedAt||'')+'|'+String(data.writer||''):'';
+}
+function enterSyncConflict(){
+ syncConflict=true;
+ clearTimeout(queueTimer);queueTimer=null;
+ setStatus('同步衝突待處理','這台裝置與雲端都有新修改。建議先按「安全合併」；若要整份取代，才使用「以這台裝置為準上傳」或「從雲端載入」。','wait');setButtons();
+}
+async function initFirebase(){
+ if(!FIREBASE_CONFIG||typeof FIREBASE_CONFIG!=='object'){
+   setStatus('雲端未設定','尚未填入 Firebase Web 設定；目前所有資料仍只存在這個瀏覽器。');
+   setButtons();return;
+ }
+ try{
+   const [
+     appMod,authMod,fsMod
+   ]=await Promise.all([
+     import('https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js'),
+     import('https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js'),
+     import('https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js')
+   ]);
+   const app=appMod.initializeApp(FIREBASE_CONFIG);
+   auth=authMod.getAuth(app);
+   db=fsMod.initializeFirestore(app,{localCache:fsMod.memoryLocalCache()});
+   window.__HW_FIREBASE={authMod,fsMod};
+   firebaseReady=true;setStatus('雲端待登入','Firebase 已連線，登入後即可跨裝置同步。','wait');setButtons();
+
+   authMod.onAuthStateChanged(auth,async user=>{
+     currentUser=user||null;
+     if(unsubscribe){unsubscribe();unsubscribe=null}
+     cloudExists=false;docRef=null;syncConflict=false;baseRemoteToken='';pendingUploadToken='';setButtons();
+     if(!user){setStatus('雲端待登入','Firebase 已設定；請登入 Google 帳號開始同步。','wait');return}
+     docRef=fsMod.doc(db,'users',user.uid,'apps','homework-rollcall-plus');
+     setStatus('正在檢查雲端','正在確認雲端是否已有紀錄…','wait');
+     const snap=await fsMod.getDoc(docRef);
+     cloudExists=snap.exists();baseRemoteToken=snapshotToken(snap);setButtons();
+     if(!cloudExists){
+       await uploadNow();
+       startListener();
+       return;
+     }
+     if(bridge?.isDirty?.()){
+       const savedBase=persistedBaseToken();
+       const remoteToken=snapshotToken(snap);
+       if(savedBase&&savedBase===remoteToken){
+         baseRemoteToken=savedBase;
+         startListener();
+         queuePush();
+       }else{
+         syncConflict=true;
+         setStatus('請選同步方向','這台裝置有尚未同步的修改，而且雲端版本與上次同步基準不同。為避免覆蓋，請選「以這台裝置為準上傳」或「從雲端載入」。','wait');
+       }
+       return;
+     }
+     applySnapshot(snap);
+     rememberBaseToken(snapshotToken(snap));
+     startListener();
+   });
+ }catch(err){
+   console.error('Firebase init failed',err);
+   firebaseReady=false;setStatus('雲端連線失敗','Firebase 載入失敗；本機資料不受影響。請檢查網路與 Firebase 設定。','err');setButtons();
+ }
+}
+function startListener(){
+ if(!docRef||unsubscribe)return;
+ const {onSnapshot}=window.__HW_FIREBASE.fsMod;
+ unsubscribe=onSnapshot(docRef,{includeMetadataChanges:true},snap=>{
+   cloudExists=snap.exists();setButtons();
+   if(!snap.exists())return;
+   if(snap.metadata.hasPendingWrites){
+     setStatus('等待同步','變更已先保存在本機，正在送往雲端…','wait');
+     return;
+   }
+   const token=snapshotToken(snap);
+   const ownUpdate=!!token&&(token===pendingUploadToken||token===lastRemoteToken);
+   if(bridge?.isDirty?.()&&!ownUpdate){enterSyncConflict();return}
+   syncConflict=false;
+   applySnapshot(snap);baseRemoteToken=token;
+   if(!bridge?.isDirty?.()&&!snap.metadata.fromCache)rememberBaseToken(token);
+   setStatus(snap.metadata.fromCache?'離線快取':'已同步',
+     snap.metadata.fromCache?'目前顯示快取資料；恢復網路後會再同步。':'此裝置已和雲端同步。',snap.metadata.fromCache?'wait':'ok');
+ });
+}
+function applySnapshot(snap){
+ if(!snap?.exists?.())return;
+ const data=snap.data();
+ if(!data||!data.state)return;
+ const token=snapshotToken(snap);
+ if(token&&token===lastRemoteToken){baseRemoteToken=token;return}
+ applyingRemote=true;
+ try{bridge?.applyRemote?.(data.state);lastRemoteToken=token;baseRemoteToken=token}catch(err){console.error('apply remote failed',err)}
+ finally{applyingRemote=false}
+}
+function stableStateText(v){
+ try{return JSON.stringify(v,Object.keys(v||{}).sort())}catch{return ''}
+}
+function sameJson(a,b){try{return JSON.stringify(a)===JSON.stringify(b)}catch{return false}}
+function mergeCloudStates(localRaw,remoteRaw){
+ const local=sanitizeState(localRaw,false),remote=sanitizeState(remoteRaw,false);
+ const cats=[],catMap=new Map();
+ for(const c of remote.categories||[]){catMap.set(c.id,{...c});cats.push(catMap.get(c.id))}
+ for(const c of local.categories||[]){
+   if(!catMap.has(c.id)){const x={...c};catMap.set(c.id,x);cats.push(x)}
+   else if(!sameJson(catMap.get(c.id),c)){Object.assign(catMap.get(c.id),c)}
+ }
+ const validCatIds=new Set(cats.map(c=>c.id));
+ const histMap=new Map(),historyConflicts=[];
+ for(const h of remote.history||[])if(validCatIds.has(h.catId))histMap.set(h.id,h);
+ for(const h of local.history||[]){
+   if(!validCatIds.has(h.catId))continue;
+   const old=histMap.get(h.id);
+   if(!old){histMap.set(h.id,h);continue}
+   if(sameJson(old,h))continue;
+   historyConflicts.push(h.id);
+   // 同一筆歷史紀錄兩邊都不同時，以 updated 較新的版本為準；相同時間則保留本機，避免離線修改消失。
+   if(Number(h.updated||0)>=Number(old.updated||0))histMap.set(h.id,h);
+ }
+ const history=[...histMap.values()].sort((a,b)=>Number(a.updated||0)-Number(b.updated||0));
+ // 今日聯絡簿採座號層級合併；同一座號兩邊不同時保留本機值。不同日期則保留日期較新的版本。
+ let contact;
+ if(local.contact?.date===remote.contact?.date){
+   contact={date:local.contact.date,statuses:{...(remote.contact?.statuses||{}),...(local.contact?.statuses||{})},leave:[...new Set([...(remote.contact?.leave||[]),...(local.contact?.leave||[])])].sort((a,b)=>a-b)};
+ }else contact=(String(local.contact?.date||'')>=String(remote.contact?.date||''))?local.contact:remote.contact;
+ const merged={
+   studentCount:Math.max(Number(local.studentCount||0),Number(remote.studentCount||0),1),
+   categories:cats,
+   currentCategory:validCatIds.has(local.currentCategory)?local.currentCategory:(validCatIds.has(remote.currentCategory)?remote.currentCategory:cats[0]?.id),
+   history,contact,drafts:{}
+ };
+ return {state:sanitizeState(merged,false),historyConflicts};
+}
+async function mergeNow(){
+ if(!currentUser||!docRef)return;
+ const {getDocFromServer}=window.__HW_FIREBASE.fsMod;
+ setStatus('正在安全合併','正在讀取雲端最新版並整合兩邊資料…','wait');
+ try{
+   const snap=await getDocFromServer(docRef);
+   if(!snap.exists()){await uploadNow(true);return}
+   const local=bridge?.getState?.(),remote=snap.data()?.state;
+   if(!local||!remote)return;
+   const result=mergeCloudStates(local,remote);
+   const extra=result.historyConflicts.length?`\n\n有 ${result.historyConflicts.length} 筆「同一筆紀錄」兩邊內容不同，系統會保留 updated 較新的版本；時間相同時保留這台裝置版本。`:'';
+   if(!confirm(`安全合併會保留兩邊不同的正式歷史紀錄，並整合今日聯絡簿。${extra}\n\n合併後會把結果寫回雲端。確定繼續嗎？`)){
+     enterSyncConflict();return;
+   }
+   // applyRemote 會保留本機 drafts；再標 dirty，讓合併結果成為待上傳正式資料。
+   bridge?.applyRemote?.(result.state);
+   localStorage.setItem('hwCheckerCloudDirtyV1','1');
+   // 強制寫回是使用者已明確確認的合併結果；若容量防護阻擋，保留衝突狀態與本機資料。
+   const mergedUploaded=await uploadNow(true);
+   if(!mergedUploaded)return;
+   startListener();
+   setStatus('已安全合併','本機與雲端不同的紀錄已整合並同步；本機臨時草稿仍保留。','ok');
+ }catch(err){
+   console.error('cloud merge failed',err);enterSyncConflict();
+ }
+}
+async function uploadNow(force=false){
+ if(!currentUser||!docRef||applyingRemote)return;
+ if(syncConflict&&!force){enterSyncConflict();return}
+ const {setDoc,serverTimestamp,runTransaction,getDocFromServer}=window.__HW_FIREBASE.fsMod;
+ const payload=bridge?.getState?.();if(!payload)return;
+ const sizeInfo=cloudSizeInfo(payload);
+ if(sizeInfo.block){
+   clearTimeout(queueTimer);queueTimer=null;pendingUploadToken='';
+   setStatus('雲端資料容量過大',`目前待同步資料約 ${formatKiB(sizeInfo.bytes)}，已超過本工具的安全上傳門檻。為避免 Firestore 寫入失敗，已停止雲端上傳；本機資料仍完整保留。請先按「匯出備份」保存 JSON，再整理較舊歷史紀錄。`,'err');
+   setButtons();
+   return false;
+ }
+ const token=Date.now(),newToken=String(token)+'|'+DEVICE_ID;
+ const docData={schema:1,state:payload,ownerUid:currentUser.uid,clientUpdatedAt:token,writer:DEVICE_ID,serverUpdatedAt:serverTimestamp()};
+ pendingUploadToken=newToken;
+ setStatus(sizeInfo.warn?'資料量偏大，正在同步':'正在同步',sizeInfo.warn
+   ?`目前待同步資料約 ${formatKiB(sizeInfo.bytes)}，已接近單一雲端文件的安全容量；這次仍會嘗試同步，建議近期匯出 JSON 備份並整理舊紀錄。`
+   :'正在把這台裝置的紀錄安全地寫入雲端…','wait');
+ try{
+  if(force)await setDoc(docRef,docData,{merge:false});
+  else{
+   // v5.47：先向伺服器確認目前版本，再進 transaction。
+   // 這能避免手機離線後恢復網路時，監聽器與自動上傳競速而漏掉衝突。
+   const baseline=persistedBaseToken()||baseRemoteToken;
+   const serverSnap=await getDocFromServer(docRef);
+   const serverToken=snapshotToken(serverSnap);
+   if(serverSnap.exists()&&baseline&&serverToken!==baseline){const err=new Error('SYNC_CONFLICT');err.code='HW_SYNC_CONFLICT';throw err}
+   baseRemoteToken=baseline||serverToken;
+   await runTransaction(db,async tx=>{
+    const current=await tx.get(docRef),remoteToken=snapshotToken(current);
+    if(current.exists()&&remoteToken!==baseRemoteToken){const err=new Error('SYNC_CONFLICT');err.code='HW_SYNC_CONFLICT';throw err}
+    tx.set(docRef,docData,{merge:false});
+   });
+  }
+  cloudExists=true;lastRemoteToken=newToken;baseRemoteToken=newToken;rememberBaseToken(newToken);pendingUploadToken='';syncConflict=false;bridge?.markSynced?.();setButtons();
+  setStatus(sizeInfo.warn?'已同步・容量偏高':'已同步',sizeInfo.warn
+    ?`已成功同步；目前雲端資料估計約 ${formatKiB(sizeInfo.bytes)}。建議先匯出 JSON 備份，並在方便時整理較舊歷史紀錄。`
+    :'這台裝置的紀錄已寫入雲端。',sizeInfo.warn?'wait':'ok');
+  return true;
+ }catch(err){
+  pendingUploadToken='';
+  if(err?.code==='HW_SYNC_CONFLICT'||String(err?.message||'').includes('SYNC_CONFLICT')){enterSyncConflict();return false}
+  if(isLikelySizeWriteError(err)){
+    setStatus('雲端寫入容量錯誤','Firebase 回報資料量可能過大；本機資料仍完整保留。請先按「匯出備份」保存 JSON，再整理舊歷史紀錄後重試。','err');
+    return false;
+  }
+  throw err;
+ }
+}
+async function downloadNow(){
+ if(!currentUser||!docRef)return;
+ const {getDoc}=window.__HW_FIREBASE.fsMod;
+ const snap=await getDoc(docRef);
+ if(!snap.exists()){setStatus('雲端沒有資料','目前雲端沒有可下載的紀錄。','wait');return}
+ syncConflict=false;applySnapshot(snap);baseRemoteToken=snapshotToken(snap);rememberBaseToken(baseRemoteToken);bridge?.markSynced?.();startListener();
+ setStatus('已同步','已從雲端載入最新紀錄；這台裝置的臨時草稿仍保留。','ok');
+}
+function queuePush(){
+ if(!currentUser||!docRef||applyingRemote)return;
+ if(syncConflict){enterSyncConflict();return}
+ clearTimeout(queueTimer);
+ setStatus('等待同步','本機已儲存，準備同步到雲端…','wait');
+ queueTimer=setTimeout(()=>uploadNow(false).catch(err=>{
+   console.error('cloud upload failed',err);
+   if(isLikelyNetworkError(err)){
+     setStatus('等待網路','目前看起來是網路／Firebase 暫時無法連線；本機資料仍保留，恢復網路後會再嘗試同步。','err');
+   }else if(isLikelySizeWriteError(err)){
+     setStatus('雲端寫入容量錯誤','Firebase 回報資料量可能過大；本機資料仍保留。請先匯出 JSON 備份，再整理較舊歷史紀錄。','err');
+   }else{
+     setStatus('雲端寫入失敗','Firebase 寫入沒有成功，但本機資料仍完整保留。請先匯出 JSON 備份，再檢查登入、Firestore 規則或稍後重試。','err');
+   }
+ }),700);
+}
+window.addEventListener('online',()=>{
+ if(currentUser&&docRef&&!syncConflict&&bridge?.isDirty?.()){
+   setStatus('重新檢查雲端','網路已恢復，正在確認離線期間雲端是否有其他更新…','wait');
+   queuePush();
+ }
+});
+async function signIn(){
+ if(!firebaseReady||!auth)return;
+ const {GoogleAuthProvider,signInWithPopup,setPersistence,browserLocalPersistence,browserSessionPersistence}=window.__HW_FIREBASE.authMod;
+ await setPersistence(auth,ui.privateDevice?.checked?browserLocalPersistence:browserSessionPersistence);
+ const provider=new GoogleAuthProvider();
+ try{await signInWithPopup(auth,provider)}
+ catch(err){console.error('sign in failed',err);setStatus('登入未完成','Google 登入沒有完成；本機資料完全不受影響。','err')}
+}
+async function signOutNow(){
+ if(auth)await window.__HW_FIREBASE.authMod.signOut(auth);
+ currentUser=null;setButtons();setStatus('雲端待登入','已登出雲端；這台裝置上的本機資料仍保留。','wait');
+}
+window.hwCloud={
+ queuePush,
+ signIn,
+ signOut:signOutNow,
+ manualMerge:mergeNow,
+ manualUpload:async()=>{
+   if(!currentUser)return;
+   const msg=syncConflict
+    ?'⚠️ 這會用「這台裝置」的整份正式資料覆蓋雲端版本。\n\n雲端上由其他裝置新增或修改、但這台沒有的資料可能會消失。若想保留兩邊資料，請取消並改用「安全合併」。\n\n確定仍要覆蓋雲端嗎？'
+    :'確定要用「這台裝置」目前的正式資料覆蓋雲端版本嗎？';
+   if(!confirm(msg))return;
+   const uploaded=await uploadNow(true);
+   if(uploaded)startListener();
+ },
+ manualDownload:async()=>{
+   if(!currentUser)return;
+   const msg=syncConflict
+    ?'⚠️ 這會用「雲端資料」取代這台裝置目前的正式資料。\n\n這台裝置尚未同步的正式紀錄會消失；臨時草稿仍會保留。若想保留兩邊正式資料，請取消並改用「安全合併」。\n\n確定仍要從雲端取代嗎？'
+    :'確定要用「雲端資料」取代這台裝置目前的正式資料嗎？本機臨時草稿會保留；建議仍先匯出備份。';
+   if(!confirm(msg))return;
+   syncConflict=false;await downloadNow();
+ }
+};
+initFirebase();
+</script>
+
+</body></html>
