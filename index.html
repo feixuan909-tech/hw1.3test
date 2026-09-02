@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r3｜功能強化版</title>
+<title>作業點名簿＋ v1.0 Enhanced r4｜手機／離線修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -830,9 +830,33 @@ html.mobile-ux .cat-list.editing .category-delete{white-space:nowrap!important}
 }
 </style>
 
+
+<style id="r4-mobile-offline-fix-css">
+/* r4：只修手機操作入口；不改桌機版與既有功能版面。 */
+html.mobile-ux .mobile-category-head{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  width:100%!important;
+}
+html.mobile-ux #mobileCategoryToggleBtn{
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:static!important;
+  justify-self:end!important;
+}
+html.mobile-ux .contact-section-head{display:flex!important;width:100%!important}
+html.mobile-ux #contactCollapseBtn{
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  margin-left:auto!important;
+  flex:0 0 auto!important;
+}
+</style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r3</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r4</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
     <div>
@@ -1269,10 +1293,14 @@ function setupMobileTopbar(){
  const ids=['exportBtn','studentToggleBtn','overviewToggleBtn'];
  const importLabel=document.querySelector('.import-label');
  const header=more.parentElement;
+ const categoryEdit=$('categoryEditBtn'),mobileCatHead=$('mobileCategoryHead'),sideHead=document.querySelector('.sidebar .side-head');
  if(isMobileUX()){
    ids.forEach(id=>{const el=$(id);if(el&&el.parentElement!==menu)menu.appendChild(el)});
    if(importLabel&&importLabel.parentElement!==menu)menu.appendChild(importLabel);
+   /* 手機把既有同一顆編輯按鈕移到可見的類別列；不複製 ID、不新增另一套事件。 */
+   if(categoryEdit&&mobileCatHead&&categoryEdit.parentElement!==mobileCatHead)mobileCatHead.appendChild(categoryEdit);
  }else{
+   if(categoryEdit&&sideHead&&categoryEdit.parentElement!==sideHead)sideHead.appendChild(categoryEdit);
    const before=more;
    const ordered=[$('exportBtn'),importLabel,$('studentToggleBtn'),$('overviewToggleBtn')].filter(Boolean);
    ordered.forEach(el=>{if(el.parentElement===menu)header.insertBefore(el,before)});
@@ -2638,6 +2666,8 @@ $('mobileMoreBtn').addEventListener('click',()=>{
 });
 $('mobileCategoryToggleBtn').addEventListener('click',()=>{mobileCategoriesCollapsed=!mobileCategoriesCollapsed;updateMobileCategoryUI()});
 syncMobileUXClass();
+updateMobileCategoryUI();
+setContactCollapsed(false);
 setupMobileTopbar();
 window.addEventListener('resize',()=>{syncMobileUXClass();setupMobileTopbar();updateMobileCategoryUI()});
 window.addEventListener('orientationchange',()=>setTimeout(()=>{syncMobileUXClass();setupMobileTopbar();updateMobileCategoryUI()},80));
@@ -2988,8 +3018,9 @@ function startListener(){
    syncConflict=false;
    applySnapshot(snap);baseRemoteToken=token;
    if(!bridge?.isDirty?.()&&!snap.metadata.fromCache)rememberBaseToken(token);
-   setStatus(snap.metadata.fromCache?'離線快取':'已同步',
-     snap.metadata.fromCache?'目前顯示快取資料；恢復網路後會再同步。':'此裝置已和雲端同步。',snap.metadata.fromCache?'wait':'ok');
+   const offlineNow=!navigator.onLine||snap.metadata.fromCache;
+   setStatus(offlineNow?'離線・待同步':'已同步',
+     offlineNow?'目前沒有可靠的雲端連線；本機資料可繼續使用，恢復網路後會再同步。':'此裝置已和雲端同步。',offlineNow?'wait':'ok');
  });
 }
 function applySnapshot(snap){
@@ -3068,6 +3099,12 @@ async function mergeNow(){
 }
 async function uploadNow(force=false){
  if(!currentUser||!docRef||applyingRemote)return;
+ if(!navigator.onLine){
+   localStorage.setItem('hwCheckerCloudDirtyV1','1');
+   setStatus('離線・待同步','目前沒有網路；資料已保存在這台裝置，恢復網路後再同步到雲端。','wait');
+   setButtons();
+   return false;
+ }
  if(syncConflict&&!force){enterSyncConflict();return}
  const {setDoc,serverTimestamp,runTransaction,getDocFromServer}=window.__HW_FIREBASE.fsMod;
  const payload=bridge?.getState?.();if(!payload)return;
@@ -3126,6 +3163,13 @@ async function downloadNow(){
 function queuePush(){
  if(!currentUser||!docRef||applyingRemote)return;
  if(syncConflict){enterSyncConflict();return}
+ if(!navigator.onLine){
+   clearTimeout(queueTimer);queueTimer=null;
+   localStorage.setItem('hwCheckerCloudDirtyV1','1');
+   setStatus('離線・待同步','目前沒有網路；本機仍可正常操作與儲存，恢復網路後會再嘗試同步。','wait');
+   setButtons();
+   return;
+ }
  clearTimeout(queueTimer);
  setStatus('等待同步','本機已儲存，準備同步到雲端…','wait');
  queueTimer=setTimeout(()=>uploadNow(false).catch(err=>{
@@ -3139,6 +3183,14 @@ function queuePush(){
    }
  }),700);
 }
+window.addEventListener('offline',()=>{
+ clearTimeout(queueTimer);queueTimer=null;pendingUploadToken='';
+ if(bridge?.isDirty?.())localStorage.setItem('hwCheckerCloudDirtyV1','1');
+ setStatus('離線・待同步',bridge?.isDirty?.()
+   ?'網路已中斷；尚未同步的變更已保存在這台裝置，仍可繼續操作。恢復網路後會再同步。'
+   :'網路已中斷；目前資料仍保存在這台裝置。離線期間可繼續操作，新變更會等恢復網路後同步。','wait');
+ setButtons();
+});
 window.addEventListener('online',()=>{
  if(currentUser&&docRef&&!syncConflict&&bridge?.isDirty?.()){
    setStatus('重新檢查雲端','網路已恢復，正在確認離線期間雲端是否有其他更新…','wait');
