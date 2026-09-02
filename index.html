@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r6｜手機操作微調版</title>
+<title>作業點名簿＋ v1.0 Enhanced r7｜手機操作微調版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -863,9 +863,20 @@ html.mobile-ux #contactCollapseBtn{
  #studentPanel .student-record-table td:nth-child(4),#studentPanel .student-record-table th:nth-child(4){white-space:nowrap}
 }
 </style>
+
+<style id="r7-mobile-stability-css">
+/* r7: keep history overflow inside its own card instead of widening the page */
+html,body{max-width:100%;overflow-x:hidden}
+.card,.section,.main,.content,.history-table-wrap{min-width:0;box-sizing:border-box}
+.history-table-wrap{display:block;width:100%;max-width:100%;overflow-x:auto!important;overflow-y:hidden!important;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.history-table{width:max-content!important;min-width:100%;max-width:none}
+@media(max-width:700px){
+  .history-table-wrap{width:100%;max-width:calc(100vw - 28px)}
+}
+</style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r6</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r7</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
     <div>
@@ -1483,21 +1494,30 @@ function stopCategoryAutoScroll(){
 }
 function updateCategoryAutoScroll(clientY){
  const side=document.querySelector('.sidebar');
- if(!side||side.scrollHeight<=side.clientHeight){stopCategoryAutoScroll();return}
- const rect=side.getBoundingClientRect(),edge=Math.min(96,Math.max(58,rect.height*.18));
+ const usePage=window.matchMedia('(pointer:coarse)').matches||window.innerWidth<=700;
+ const viewportTop=0,viewportBottom=window.innerHeight;
+ const rect=usePage?{top:viewportTop,bottom:viewportBottom,height:viewportBottom}:side?.getBoundingClientRect();
+ if(!rect){stopCategoryAutoScroll();return}
+ const edge=Math.min(120,Math.max(72,rect.height*.16));
  let speed=0;
  if(clientY<rect.top+edge){
    const ratio=Math.min(1,Math.max(0,(rect.top+edge-clientY)/edge));
-   speed=-(7+Math.round(15*ratio));
+   speed=-(5+Math.round(13*ratio));
  }else if(clientY>rect.bottom-edge){
    const ratio=Math.min(1,Math.max(0,(clientY-(rect.bottom-edge))/edge));
-   speed=7+Math.round(15*ratio);
+   speed=5+Math.round(13*ratio);
  }
  if(speed===categoryAutoScrollSpeed&&categoryAutoScrollTimer)return;
  stopCategoryAutoScroll();categoryAutoScrollSpeed=speed;
  if(speed)categoryAutoScrollTimer=setInterval(()=>{
-   const max=Math.max(0,side.scrollHeight-side.clientHeight);
-   side.scrollTop=Math.max(0,Math.min(max,side.scrollTop+categoryAutoScrollSpeed));
+   if(usePage){
+     const before=window.scrollY;
+     window.scrollBy(0,categoryAutoScrollSpeed);
+     if(window.scrollY===before && ((categoryAutoScrollSpeed<0&&before<=0)||(categoryAutoScrollSpeed>0&&before+window.innerHeight>=document.documentElement.scrollHeight))) stopCategoryAutoScroll();
+   }else if(side){
+     const max=Math.max(0,side.scrollHeight-side.clientHeight);
+     side.scrollTop=Math.max(0,Math.min(max,side.scrollTop+categoryAutoScrollSpeed));
+   }
  },16);
 }
 let categoryTouchDrag=null;
@@ -3288,4 +3308,18 @@ window.hwCloud={
 initFirebase();
 </script>
 
+
+<script id="r7-offline-shell">
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  window.addEventListener('load',async()=>{
+    try{
+      const reg=await navigator.serviceWorker.register('./hw-offline-sw.js',{scope:'./'});
+      await navigator.serviceWorker.ready;
+      const worker=reg.active||reg.waiting||reg.installing;
+      if(worker&&navigator.onLine) worker.postMessage({type:'CACHE_PAGE',url:location.href});
+    }catch(err){ console.warn('offline shell unavailable',err); }
+  });
+})();
+</script>
 </body></html>
