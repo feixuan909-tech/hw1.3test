@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8｜手機操作微調版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox｜測試資料隔離版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -876,7 +876,8 @@ html,body{max-width:100%;overflow-x:hidden}
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
     <div>
@@ -1049,7 +1050,7 @@ function refreshToday(){
  if(now!==TODAY)TODAY=now;
  return TODAY;
 }
-const STORE='hwCheckerSecureV4';
+const STORE='hwCheckerR8SandboxSecureV1';
 const DEFAULT_CATS=['國習','甲本','乙本','成語','圈詞','國練','數習','數練','作文','閱讀單','回條','分享報告'];
 const VALID_STATUS=new Set(['red','blue','yellow','green','ring','orange']);
 const SAFE_ID=/^[A-Za-z0-9_-]{1,60}$/;
@@ -1172,7 +1173,7 @@ function sanitizeState(raw,keepDrafts=false){
   }
   return s;
 }
-const CLOUD_DIRTY_KEY='hwCheckerCloudDirtyV1';
+const CLOUD_DIRTY_KEY='hwCheckerR8SandboxCloudDirtyV1';
 let state;try{state=sanitizeState(JSON.parse(localStorage.getItem(STORE)||'null'),true)}catch{state=freshState()}
 let selectedStudents=new Set(),selectedStatus='blue',selectedContactStudents=new Set(),selectedContactStatus='blue',progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
 function saveLocalOnly(){localStorage.setItem(STORE,JSON.stringify(state))}
@@ -2379,7 +2380,7 @@ function exportOverviewExcel(){
  const blob=makeStoredZip(files),url=URL.createObjectURL(blob),a=document.createElement('a');
  a.href=url;a.download=`作業最新進度總覽_${TODAY}.xlsx`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-const OVERVIEW_VIEW_MODE_KEY='hwOverviewViewModeV1';
+const OVERVIEW_VIEW_MODE_KEY='hwCheckerR8SandboxOverviewViewModeV1';
 function setOverviewViewMode(mode,save=true){
  const sticky=mode==='sticky';
  const panel=$('overviewPanel');
@@ -2956,8 +2957,8 @@ const ui={
 const bridge=window.hwCloudBridge;
 let firebaseReady=false,auth=null,db=null,currentUser=null,docRef=null,unsubscribe=null;
 let queueTimer=null,applyingRemote=false,lastRemoteToken='',baseRemoteToken='',pendingUploadToken='',cloudExists=false,syncConflict=false;
-const CLOUD_BASE_TOKEN_KEY='hwCheckerCloudBaseTokenV1';
-const CLOUD_DEVICE_ID_KEY='hwCheckerCloudDeviceIdV1';
+const CLOUD_BASE_TOKEN_KEY='hwCheckerR8SandboxCloudBaseTokenV1';
+const CLOUD_DEVICE_ID_KEY='hwCheckerR8SandboxCloudDeviceIdV1';
 // Firestore 單一文件上限為 1 MiB。JSON 位元組數不是 Firestore 實際編碼大小，
 // 因此採保守門檻：700 KiB 起提醒、850 KiB 起禁止雲端寫入，保留安全緩衝。
 const CLOUD_WARN_BYTES=700*1024;
@@ -3046,7 +3047,7 @@ async function initFirebase(){
      if(unsubscribe){unsubscribe();unsubscribe=null}
      cloudExists=false;docRef=null;syncConflict=false;baseRemoteToken='';pendingUploadToken='';setButtons();
      if(!user){setStatus('雲端待登入','Firebase 已設定；請登入 Google 帳號開始同步。','wait');return}
-     docRef=fsMod.doc(db,'users',user.uid,'apps','homework-rollcall-plus');
+     docRef=fsMod.doc(db,'users',user.uid,'apps','homework-rollcall-plus-r8-sandbox');
      setStatus('正在檢查雲端','正在確認雲端是否已有紀錄…','wait');
      const snap=await fsMod.getDoc(docRef);
      cloudExists=snap.exists();baseRemoteToken=snapshotToken(snap);setButtons();
@@ -3162,7 +3163,7 @@ async function mergeNow(){
    }
    // applyRemote 會保留本機 drafts；再標 dirty，讓合併結果成為待上傳正式資料。
    bridge?.applyRemote?.(result.state);
-   localStorage.setItem('hwCheckerCloudDirtyV1','1');
+   localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
    // 強制寫回是使用者已明確確認的合併結果；若容量防護阻擋，保留衝突狀態與本機資料。
    const mergedUploaded=await uploadNow(true);
    if(!mergedUploaded)return;
@@ -3175,7 +3176,7 @@ async function mergeNow(){
 async function uploadNow(force=false){
  if(!currentUser||!docRef||applyingRemote)return;
  if(!navigator.onLine){
-   localStorage.setItem('hwCheckerCloudDirtyV1','1');
+   localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
    setStatus('離線・待同步','目前沒有網路；資料已保存在這台裝置，恢復網路後再同步到雲端。','wait');
    setButtons();
    return false;
@@ -3240,7 +3241,7 @@ function queuePush(){
  if(syncConflict){enterSyncConflict();return}
  if(!navigator.onLine){
    clearTimeout(queueTimer);queueTimer=null;
-   localStorage.setItem('hwCheckerCloudDirtyV1','1');
+   localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
    setStatus('離線・待同步','目前沒有網路；本機仍可正常操作與儲存，恢復網路後會再嘗試同步。','wait');
    setButtons();
    return;
@@ -3260,7 +3261,7 @@ function queuePush(){
 }
 window.addEventListener('offline',()=>{
  clearTimeout(queueTimer);queueTimer=null;pendingUploadToken='';
- if(bridge?.isDirty?.())localStorage.setItem('hwCheckerCloudDirtyV1','1');
+ if(bridge?.isDirty?.())localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
  setStatus('離線・待同步',bridge?.isDirty?.()
    ?'網路已中斷；尚未同步的變更已保存在這台裝置，仍可繼續操作。恢復網路後會再同步。'
    :'網路已中斷；目前資料仍保存在這台裝置。離線期間可繼續操作，新變更會等恢復網路後同步。','wait');
