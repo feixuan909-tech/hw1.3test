@@ -907,9 +907,17 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
 .cat-touch-edge-hint{position:fixed;left:12px;right:12px;z-index:99998;pointer-events:none;padding:7px 10px;border-radius:10px;background:rgba(47,158,219,.92);color:white;text-align:center;font-weight:800;font-size:13px;opacity:0;transition:opacity .12s}
 .cat-touch-edge-hint.top{top:10px}.cat-touch-edge-hint.bottom{bottom:10px}.cat-touch-edge-hint.show{opacity:1}
 </style>
+
+<style id="r8-oklogic1-css">
+.num.history-ok-mark{position:relative}
+.num.history-ok-mark::after{content:"OK";position:absolute;right:-4px;top:-7px;font-size:9px;line-height:1;font-weight:900;color:#237a3f;background:#fff;border:1px solid #9fd7b1;border-radius:7px;padding:2px 3px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.student-quick-ok{margin-left:5px;padding:3px 6px!important;font-size:10px!important;line-height:1.2;vertical-align:middle}
+.student-status-with-ok{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+.student-ok-tag{font-size:10px;font-weight:900;color:#237a3f;background:#eaf7ee;border:1px solid #9fd7b1;border-radius:8px;padding:1px 4px}
+</style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox HistoryFix2</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox OKLogic1</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -1369,6 +1377,7 @@ let historyOkPending=new Set();
 let historyEditId='';
 let historyEditDraft=null;
 let historyEditOriginalManual={};
+let historyEditOriginalStatuses={};
 let categoryDragId='';
 function normalizeCategoryName(v){
  return cleanText(v,30).trim().replace(/\s+/g,' ').toLocaleLowerCase('zh-Hant');
@@ -1802,7 +1811,9 @@ function renderStudentGrid(){
    const st=hasExplicit?d[n]:(isAutoLeave?'orange':'red');
    const b=document.createElement('button');
    b.type='button';
-   b.className=`num ${st} ${selectedStudents.has(n)?'selected':''}`;
+   const originalH=historyEditId?state.history.find(x=>x.id===historyEditId):null;
+   const keepsOriginalOK=!!(originalH&&historyEditOriginalManual?.[n]===true&&(historyEditDraft?.[n]||'red')===(historyEditOriginalStatuses?.[n]||originalH.statuses?.[n]||'red'));
+   b.className=`num ${st} ${selectedStudents.has(n)?'selected':''} ${keepsOriginalOK?'history-ok-mark':''}`;
    b.textContent=n;
    b.addEventListener('click',()=>{
      // 尚未登記的座號：單點即快速通過；自動請假不適用。
@@ -2066,7 +2077,7 @@ function toggleOverview(force){
  btn.textContent=show?'收起總覽':'作業最新進度總覽';
  if(show){renderOverview();panel.scrollIntoView({behavior:'smooth',block:'start'})}
 }
-function isWholeClassOK(h){if(!h)return false;for(let n=1;n<=state.studentCount;n++)if((h.statuses[n]||'red')!=='blue')return false;return true}
+function isWholeClassOK(h){if(!h)return false;for(let n=1;n<=state.studentCount;n++){const st=h.statuses?.[n]||'red';if(st!=='blue'&&!isStatusFullyResolved(h,n))return false}return true}
 function hasUnresolvedIndependentRecord(h){
  if(!h)return false;
  for(let n=1;n<=state.studentCount;n++){
@@ -2141,13 +2152,30 @@ function editIndependentWorkLabel(historyId){
 function statusText(st,h=null,seat=null){
  const labels={blue:'通過',red:'未交／未寫',green:'未簽',ring:'未訂簽',yellow:'未訂正',orange:'請假'};
  const cls=VALID_STATUS.has(st)?st:'red';
- // 個人紀錄顯示「目前結果」：只要這筆已完成補登 OK，
- // 統計上已視為通過，因此個人紀錄也統一顯示藍色「通過」。
- // 原始狀態與補登資訊仍完整保留在 history，不修改底層資料。
- if(h&&seat!=null&&isStatusFullyResolved(h,seat)){
-   return `<span class="student-status-text"><span class="dot blue"></span>通過</span>`;
+ if(h&&seat!=null&&isStatusFullyResolved(h,seat)&&cls!=='blue'){
+   return `<span class="student-status-with-ok"><span class="student-status-text"><span class="dot ${cls}"></span>${labels[cls]||labels.red}</span><span class="student-ok-tag">OK</span></span>`;
  }
  return `<span class="student-status-text"><span class="dot ${cls}"></span>${labels[cls]||labels.red}</span>`;
+}
+function studentQuickOkButton(h,seat){
+ if(!h||!Number.isInteger(Number(seat)))return '';
+ const st=h.statuses?.[seat]||'red';
+ if(!['red','yellow','green','ring'].includes(st)||isStatusFullyResolved(h,seat))return '';
+ return `<button type="button" class="btn student-quick-ok" data-history-id="${esc(h.id)}" data-seat="${Number(seat)}">補登 OK</button>`;
+}
+function quickResolveStudentHistory(historyId,seat){
+ const h=state.history.find(x=>x.id===historyId);seat=Number(seat);
+ if(!h||!Number.isInteger(seat)||seat<1||seat>state.studentCount)return;
+ const st=h.statuses?.[seat];
+ if(!['red','yellow','green','ring'].includes(st)||isStatusFullyResolved(h,seat))return;
+ h.manualResolved||={};h.manualResolved[seat]=true;
+ h.resolved||={};h.resolvedParts||={};h.resolved[seat]=true;h.resolvedParts[seat]={missing:true,correction:true,signature:true};
+ h.updated=nextUpdatedStamp();
+ const c=state.categories.find(x=>x.id===h.catId);if(c?.kind==='continuous')recomputeContinuousResolutions(h.catId);
+ save();renderStudentRecord();renderTable();renderOverview();renderCats();renderCurrentCategorySummary();
+}
+function bindStudentQuickOkButtons(){
+ document.querySelectorAll('.student-quick-ok').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();quickResolveStudentHistory(String(btn.dataset.historyId||''),Number(btn.dataset.seat))}));
 }
 function studentHasAnyHistory(catId){return state.history.some(h=>h.catId===catId)}
 function studentRecordIsPending(h,seat){
@@ -2205,7 +2233,7 @@ function renderStudentRecord(){
  if(continuous.length){
    const rows=studentRecordRowsWithBreak(continuous,selectedStudentSeat,(c,addBreak)=>{
      const h=latestRecord(c.id),st=h.statuses?.[selectedStudentSeat]||'red';
-     return `<tr${addBreak?' class="student-record-priority-break"':''}><td>${esc(c.name)}</td><td>${h.date}</td><td>${h.content?esc(h.content):'—'}</td><td>${statusText(st,h,selectedStudentSeat)}</td></tr>`;
+     return `<tr${addBreak?' class="student-record-priority-break"':''}><td>${esc(c.name)}</td><td>${h.date}</td><td>${h.content?esc(h.content):'—'}</td><td>${statusText(st,h,selectedStudentSeat)}${studentQuickOkButton(h,selectedStudentSeat)}</td></tr>`;
    });
    out+=`<section class="student-record-section"><h4>連續作業｜最新一期</h4><div class="student-record-table-wrap"><table class="student-record-table"><colgroup><col class="student-col-category"><col class="student-col-date"><col class="student-col-progress"><col class="student-col-status"></colgroup><thead><tr><th>類別</th><th>日期</th><th>進度</th><th>狀態</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
  }
@@ -2226,11 +2254,12 @@ function renderStudentRecord(){
      const addBreak=studentRecordSortMode==='pending'&&completedStarted&&!pending&&!breakAdded;
      if(addBreak)breakAdded=true;
      const st=h.statuses?.[selectedStudentSeat]||'red';
-     return `<tr${addBreak?' class="student-record-priority-break"':''}><td>${esc(c.name)}</td><td>${h.date}</td><td>${h.content?esc(h.content):'—'}</td><td>${statusText(st,h,selectedStudentSeat)}</td></tr>`;
+     return `<tr${addBreak?' class="student-record-priority-break"':''}><td>${esc(c.name)}</td><td>${h.date}</td><td>${h.content?esc(h.content):'—'}</td><td>${statusText(st,h,selectedStudentSeat)}${studentQuickOkButton(h,selectedStudentSeat)}</td></tr>`;
    }).join('');
    out+=`<section class="student-record-section"><h4>獨立項目｜全部紀錄</h4><div class="student-record-table-wrap"><table class="student-record-table"><colgroup><col class="student-col-category"><col class="student-col-date"><col class="student-col-progress"><col class="student-col-status"></colgroup><thead><tr><th>類別</th><th>日期</th><th>進度／標題</th><th>狀態</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
  }
  body.innerHTML=out;
+ bindStudentQuickOkButtons();
 }
 function toggleStudentPanel(force){
  const panel=$('studentPanel'),btn=$('studentToggleBtn');
@@ -2538,7 +2567,7 @@ function toggleHistoryOkEdit(id){
 
 
 function cancelHistoryRecordEdit(render=true){
- historyEditId='';historyEditDraft=null;historyEditOriginalManual={};
+ historyEditId='';historyEditDraft=null;historyEditOriginalManual={};historyEditOriginalStatuses={};
  selectedStudents.clear();progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
  if(render){renderProgress();renderHistoryMainEditBanner();renderStudentGrid();renderTable();renderCurrentCategorySummary()}
 }
@@ -2548,6 +2577,7 @@ function startHistoryRecordEdit(id){
  historyEditId=id;historyEditDraft={};
  for(let n=1;n<=state.studentCount;n++)historyEditDraft[n]=h.statuses?.[n]||'red';
  historyEditOriginalManual={...(h.manualResolved||{})};
+ historyEditOriginalStatuses={...(h.statuses||{})};
  state.currentCategory=h.catId;
  $('recordDate').value=h.date;
  const entryBody=$('homeworkEntryBody'),entryBtn=$('homeworkEntryCollapseBtn');
@@ -2576,8 +2606,9 @@ function saveHistoryRecordFromMain(){
  }
  h.manualResolved={};
  for(const [seat,flag] of Object.entries(historyEditOriginalManual||{})){
-   const st=h.statuses?.[seat];
-   if(flag===true&&['red','yellow','green','ring','orange'].includes(st))h.manualResolved[seat]=true;
+   const st=h.statuses?.[seat],originalSt=historyEditOriginalStatuses?.[seat];
+   // 舊 OK 只在原狀態沒有被改動時保留；一旦重新改狀態，就必須重新補登。
+   if(flag===true&&st===originalSt&&['red','yellow','green','ring','orange'].includes(st))h.manualResolved[seat]=true;
  }
  h.updated=nextUpdatedStamp();
  const c=state.categories.find(x=>x.id===h.catId);
@@ -2587,7 +2618,7 @@ function saveHistoryRecordFromMain(){
    for(const seat of Object.keys(h.manualResolved)){h.resolved[seat]=true;h.resolvedParts[seat]={missing:true,correction:true,signature:true}}
  }
  save();
- historyEditId='';historyEditDraft=null;historyEditOriginalManual={};
+ historyEditId='';historyEditDraft=null;historyEditOriginalManual={};historyEditOriginalStatuses={};
  selectedStudents.clear();progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
  renderAll();
 }
