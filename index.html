@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox｜手機拖曳修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox OKLogic2｜總覽調整版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -915,9 +915,42 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
 .student-status-with-ok{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
 .student-ok-tag{font-size:10px;font-weight:900;color:#237a3f;background:#eaf7ee;border:1px solid #9fd7b1;border-radius:8px;padding:1px 4px}
 </style>
+
+<style id="r8-oklogic2-overview-css">
+/* OKLogic2: 個人紀錄手機欄寬與快速 OK 對齊 */
+#studentPanel .student-record-table col.student-col-category{width:16%}
+#studentPanel .student-record-table col.student-col-date{width:20%}
+#studentPanel .student-record-table col.student-col-progress{width:24%}
+#studentPanel .student-record-table col.student-col-status{width:40%}
+#studentPanel .student-record-table td:nth-child(4){vertical-align:middle}
+#studentPanel .student-record-table td:nth-child(4)>.student-status-text,
+#studentPanel .student-record-table td:nth-child(4)>.student-status-with-ok{vertical-align:middle}
+#studentPanel .student-quick-ok{display:inline-flex!important;align-items:center;justify-content:center;vertical-align:middle;margin:0 0 0 5px!important;position:relative;top:0}
+#studentPanel .student-status-text{display:inline-flex;align-items:center;gap:3px;vertical-align:middle}
+@media(max-width:760px){
+  #studentPanel .student-record-table{min-width:0!important;width:100%!important;table-layout:fixed!important}
+  #studentPanel .student-record-table th,#studentPanel .student-record-table td{padding:5px 3px!important;font-size:10.5px!important}
+  #studentPanel .student-record-table td:nth-child(4),#studentPanel .student-record-table th:nth-child(4){white-space:nowrap!important}
+  #studentPanel .student-quick-ok{font-size:9px!important;padding:2px 4px!important;margin-left:3px!important}
+  #studentPanel .student-ok-tag{font-size:9px;padding:1px 3px}
+}
+/* 獨立項目歷史紀錄：點欄位可只查看該筆目前繳交情形 */
+.history-record-viewable{cursor:pointer}
+.history-record-viewable:hover{background:#f3f8fd}
+.history-record-viewable.history-record-view-selected{box-shadow:inset 0 -3px 0 #4da3ff;background:#eef7ff}
+.history-record-view-hint{font-size:9px;color:#6d8aa4;margin-top:3px;font-weight:700}
+/* HistoryFix3: 少量資料先貼合容器；只有內容真的超寬時才由內層產生水平捲動。 */
+.history-table{width:100%!important;min-width:0!important;max-width:none!important}
+.history-table th,.history-table td{min-width:56px}
+.history-table th:first-child,.history-table td:first-child{min-width:44px;width:44px}
+.history-table-scroll{overflow-x:auto;overflow-y:visible}
+/* 總覽欄頭：進度與日期有明顯間距 */
+.overview-progress-date{display:flex;align-items:center;justify-content:center;gap:10px;white-space:nowrap}
+.overview-progress-date .overview-date-only{display:inline-block}
+</style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox OKLogic1</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox OKLogic2</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -2042,6 +2075,7 @@ function summaryStatusGroups(rec){
  }
  return groups;
 }
+let independentSummaryViewId='';
 function renderSummary(rec){
  const groups=summaryStatusGroups(rec);
  const labels={orange:['請假','orange'],red:['未交／未寫','red'],green:['未簽','green'],ring:['未訂簽','ring'],yellow:['未訂正','yellow']};
@@ -2050,7 +2084,12 @@ function renderSummary(rec){
  $('dailySummary').classList.remove('hidden');
 }
 function renderCurrentCategorySummary(){
- const rec=latestRecord(currentCat().id);
+ const c=currentCat();
+ let rec=latestRecord(c.id);
+ if(c.kind==='independent'&&independentSummaryViewId){
+   const chosen=state.history.find(h=>h.id===independentSummaryViewId&&h.catId===c.id);
+   if(chosen)rec=chosen;else independentSummaryViewId='';
+ }
  if(!rec){$('dailySummary').classList.add('hidden');$('dailySummary').innerHTML='';return}
  renderSummary(rec);
 }
@@ -2150,7 +2189,7 @@ function editIndependentWorkLabel(historyId){
 }
 
 function statusText(st,h=null,seat=null){
- const labels={blue:'通過',red:'未交／未寫',green:'未簽',ring:'未訂簽',yellow:'未訂正',orange:'請假'};
+ const labels={blue:'通過',red:'未交',green:'未簽',ring:'未訂簽',yellow:'未訂正',orange:'請假'};
  const cls=VALID_STATUS.has(st)?st:'red';
  if(h&&seat!=null&&isStatusFullyResolved(h,seat)&&cls!=='blue'){
    return `<span class="student-status-with-ok"><span class="student-status-text"><span class="dot ${cls}"></span>${labels[cls]||labels.red}</span><span class="student-ok-tag">OK</span></span>`;
@@ -2496,28 +2535,48 @@ function restoreOverviewViewMode(){
  setOverviewViewMode(mode,false);
 }
 
+function overviewProgressDateHTML(h,c){
+ const date=fmtDate(h.date);
+ let progress='';
+ if(c.kind==='independent'){
+   progress=cleanText(h.workLabel||'',6).trim()||workKeyword(h.content)||cleanText(h.content||'',18).trim();
+ }else{
+   progress=cleanText(h.content||'',30).trim();
+ }
+ return `<div class="overview-progress-date">${progress?`<span>${esc(progress)}</span>`:''}<span class="overview-date-only">${esc(date)}</span></div>`;
+}
+function overviewColumns(){
+ const cols=[];
+ for(const c of state.categories){
+   if(c.showOverview===false||!studentHasAnyHistory(c.id))continue;
+   if(c.kind==='continuous'){
+     const h=latestRecord(c.id);if(h)cols.push({c,h});
+   }else{
+     // 獨立項目每一筆正式紀錄各自成為一個直行；同類別多篇不互相覆蓋。
+     const recs=state.history.filter(h=>h.catId===c.id).sort(compareHistory);
+     for(const h of recs)cols.push({c,h});
+   }
+ }
+ return cols;
+}
 function renderOverview(){
- const cols=state.categories.filter(c=>c.showOverview!==false&&studentHasAnyHistory(c.id)).map(c=>({c,h:latestRecord(c.id)})).filter(x=>x.h);
- $('overviewHead').innerHTML=`<tr><th class="seat-col">類別</th>${cols.map(({c})=>`<th class="cat-head">${esc(c.name)}${c.kind==='independent'?'<span class="independent-badge" title="獨立項目" aria-label="獨立項目">獨</span>':''}</th>`).join('')}</tr><tr><th class="seat-col axis-text">座號＼日期</th>${cols.map(({c,h})=>`<th class="date-head">${c.kind==='independent'?independentWorkTags(c.id):fmtDate(h.date)}</th>`).join('')}</tr>`;
+ const cols=overviewColumns();
+ $('overviewHead').innerHTML=`<tr><th class="seat-col">類別</th>${cols.map(({c})=>`<th class="cat-head">${esc(c.name)}${c.kind==='independent'?'<span class="independent-badge" title="獨立項目" aria-label="獨立項目">獨</span>':''}</th>`).join('')}</tr><tr><th class="seat-col axis-text">座號＼進度＆日期</th>${cols.map(({c,h})=>`<th class="date-head">${overviewProgressDateHTML(h,c)}</th>`).join('')}</tr>`;
  let rows='';
  for(let n=1;n<=state.studentCount;n++){
    let cells='';
-   for(const {c,h} of cols){
-     if(c.kind==='independent'){
-       cells+=`<td>${independentOverviewCell(c.id,n)}</td>`;
-     }else if(isWholeClassOK(h)){
+   for(const {h} of cols){
+     if(isWholeClassOK(h)){
        if(n===1)cells+=`<td class="all-ok-cell" rowspan="${state.studentCount}"><span class="all-ok-stamp">OK</span></td>`;
      }else{
-       cells+=`<td>${statusIcon(h.statuses[n]||'red',isStatusFullyResolved(h,n),resolvedPartState(h,n))}</td>`;
+       cells+=`<td>${statusIcon(h.statuses?.[n]||'red',isStatusFullyResolved(h,n),resolvedPartState(h,n))}</td>`;
      }
    }
    rows+=`<tr><td class="seat-col">${n}</td>${cells}</tr>`;
  }
  $('overviewBody').innerHTML=rows||'<tr><td class="seat-col">—</td><td class="small">尚無作業紀錄</td></tr>';
- $('overviewHead').querySelectorAll('[data-work-label-id]').forEach(tag=>{
-   tag.addEventListener('dblclick',()=>editIndependentWorkLabel(String(tag.dataset.workLabelId||'')));
- });
 }
+
 function previewManualHistoryOK(h,seat){
  const actual=isStatusFullyResolved(h,seat);
  if(historyOkEditId===h.id&&historyOkPending.has(seat))return !actual;
@@ -2633,6 +2692,19 @@ function renderTable(){
    const th=document.createElement('th');if(i===0)th.className='latest-col';
    const progressDiv=document.createElement('div');progressDiv.className='history-progress-box';progressDiv.innerHTML=progressHTML(h);
    const dateDiv=document.createElement('div');dateDiv.textContent=h.date;
+   if(c.kind==='independent'){
+     th.classList.add('history-record-viewable');
+     if(independentSummaryViewId===h.id)th.classList.add('history-record-view-selected');
+     th.title='點一下查看這一筆的目前繳交情形';
+     const viewHint=document.createElement('div');viewHint.className='history-record-view-hint';viewHint.textContent='點一下查看繳交情形';
+     th.addEventListener('click',e=>{
+       if(e.target.closest('button'))return;
+       independentSummaryViewId=h.id;
+       renderSummary(h);renderTable();
+       $('dailySummary')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+     });
+     th.append(progressDiv,dateDiv,viewHint);
+   }
    const controls=document.createElement('div');controls.style.cssText='display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:5px';
    const recordEdit=document.createElement('button');
    recordEdit.type='button';recordEdit.className=`btn history-record-edit-btn ${historyEditId===h.id?'active':''}`;
@@ -2657,9 +2729,16 @@ function renderTable(){
    del.textContent='刪除此筆';
    del.addEventListener('click',()=>showHistoryDeleteConfirm(h));
    controls.appendChild(del);
-   th.append(progressDiv,dateDiv,controls);headRow.appendChild(th);
+   if(c.kind==='independent')th.appendChild(controls);else th.append(progressDiv,dateDiv,controls);headRow.appendChild(th);
  });
  $('tableHead').replaceChildren(headRow);
+ const historyTable=$('tableHead')?.closest('table');
+ if(historyTable){
+   // 1～少量紀錄優先使用固定寬度；欄位增加後自然超出，才出現水平捲動。
+   const need=Math.max(0,44+cols.length*150);
+   historyTable.style.minWidth=need>0?`${need}px`:'0';
+   historyTable.style.width=need<=760?'100%':'max-content';
+ }
  let rows='';
  for(let n=1;n<=state.studentCount;n++){
    let cells='';
@@ -2714,6 +2793,7 @@ function deleteHistory(id){
  state.history.splice(idx,1);
  if(historyOkEditId===id){historyOkEditId='';historyOkPending.clear();}
  if(historyEditId===id)cancelHistoryRecordEdit(false)
+ if(independentSummaryViewId===id)independentSummaryViewId='';
  recomputeContinuousResolutions(deletedCatId);
  save();
  const box=$('historyDeleteConfirm');if(box)box.remove();
