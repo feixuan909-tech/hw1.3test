@@ -1,4 +1,4 @@
-const CACHE='hw-checker-r8-sandbox-returnslip26-shell-v1';
+const CACHE='hw-checker-r8-sandbox-returnslip27-shell-v1';
 
 async function cacheShell(){
   const c=await caches.open(CACHE);
