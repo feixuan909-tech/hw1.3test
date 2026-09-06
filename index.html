@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix5｜連續OK規則與歷史排序修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix6｜補登OK取消連鎖修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -1007,7 +1007,7 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix5</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix6</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -1937,8 +1937,14 @@ function applyStatusToSelected(){
  const d=getDraft();
  selectedStudents.forEach(n=>{
    d[n]=selectedStatus;
-   // 歷史編輯中只要重新指定過這位學生的狀態，舊的「手動補登 OK」即視為取消。
-   if(historyEditId&&historyEditOriginalManual?.[n]===true)historyEditCancelledManual.add(n);
+   // DataLogicFix6：歷史編輯中，若這位學生原本已顯示 OK（不論手動或由較新紀錄推算），
+   // 再次指定原本的未通過狀態，就視為老師明確取消這一筆的 OK。
+   if(historyEditId){
+     const originalH=state.history.find(x=>x.id===historyEditId);
+     const originalSt=historyEditOriginalStatuses?.[n]||originalH?.statuses?.[n]||'red';
+     if(originalH&&isStatusFullyResolved(originalH,n)&&selectedStatus===originalSt)historyEditCancelledManual.add(n);
+     else if(historyEditOriginalManual?.[n]===true)historyEditCancelledManual.add(n);
+   }
  });
  save();selectedStudents.clear();renderStudentGrid();
 }
@@ -2694,7 +2700,21 @@ function commitHistoryOkEdits(){
      const st=h.statuses?.[seat];
      if(!['red','yellow','green','ring','orange'].includes(st))continue;
      if(isStatusFullyResolved(h,seat)){
+       // DataLogicFix6：取消某筆 OK 時，該筆之後的「補登 OK」也一併失效；
+       // 更早紀錄保持原狀。這樣 recompute 不會立刻被較新的手動 OK 再補回來。
        delete h.resolved[seat];delete h.resolvedParts[seat];delete h.manualResolved[seat];
+       if(c?.kind==='continuous'){
+         const ordered=continuousChronological(h.catId);
+         const pos=ordered.findIndex(x=>x.id===h.id);
+         if(pos>=0){
+           for(const later of ordered.slice(pos+1)){
+             if(later.manualResolved)delete later.manualResolved[seat];
+             if(later.resolved)delete later.resolved[seat];
+             if(later.resolvedParts)delete later.resolvedParts[seat];
+             later.updated=nextUpdatedStamp();
+           }
+         }
+       }
      }else{
        h.resolved[seat]=true;
        h.resolvedParts[seat]={missing:true,correction:true,signature:true};
