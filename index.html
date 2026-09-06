@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix8｜補登OK取消提交修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix9｜方向傳遞定版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -1007,7 +1007,7 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix8</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix9</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -1417,7 +1417,10 @@ function getDraft(){
  return state.drafts[k];
 }
 function compareHistory(a,b){
- // DataLogicFix5：歷史紀錄左右位置只看「首次成立」順序；編輯不改位置。
+ // DataLogicFix9：歷史左右順序以「成立日期」為主；同一天再看首次成立時間。
+ // 最後編輯時間 updated 不參與排序，因此編輯舊紀錄不會把它移到最左側。
+ const d=String(b?.date||'').localeCompare(String(a?.date||''));
+ if(d)return d;
  const ai=state.history.indexOf(a),bi=state.history.indexOf(b);
  const ac=historyCreationStamp(a,ai),bc=historyCreationStamp(b,bi);
  return bc-ac||bi-ai;
@@ -2021,70 +2024,46 @@ function continuousChronological(catId){
  return indexed.map(x=>x.h);
 }
 function applyContinuousResolution(current,earlier){
+ // DataLogicFix9 正式規則：
+ // 1) 通過／補登 OK 只向「更舊紀錄」傳遞完成，不更動更新的紀錄。
+ // 2) 未通過／取消 OK 的向後失效由編輯與補登提交流程處理，這裡不反向改舊紀錄。
  for(let n=1;n<=state.studentCount;n++){
    const now=current.statuses?.[n];
-   // 最新一筆若本身是藍色通過，或老師已明確對這一筆補登 OK，
-   // 都代表此學生已完成到這個進度，因此更早的欠件應保留原狀態並自動補上 OK。
    const currentCompleted=(now==='blue'||current.manualResolved?.[n]===true);
-
-   if(currentCompleted){
-     for(const h of earlier){
-       const prev=h.statuses?.[n];
-       if(!['red','yellow','green','ring','orange'].includes(prev))continue;
-       h.resolved||={};h.resolvedParts||={};
-       h.resolved[n]=true;
-       h.resolvedParts[n]={missing:true,correction:true,signature:true};
-     }
-     continue;
-   }
-
+   if(!currentCompleted)continue;
    for(const h of earlier){
      const prev=h.statuses?.[n];
-     if(!['red','yellow','green','ring','orange'].includes(prev)||isStatusFullyResolved(h,n))continue;
-     h.resolvedParts||={};
-     const parts=h.resolvedParts[n]||{};
-
-     if(now==='yellow'){
-       // 現在只剩未訂正，代表簽名問題已處理；請假仍視為尚未確認補寫。
-       parts.signature=true;
-     }else if(now==='green'){
-       // 現在只剩未簽，代表訂正問題已處理。
-       parts.correction=true;
-     }
-     h.resolvedParts[n]=parts;
-     if(isStatusFullyResolved(h,n)){
-       h.resolved||={};
-       h.resolved[n]=true;
-     }
+     if(!['red','yellow','green','ring','orange'].includes(prev))continue;
+     h.resolved||={};h.resolvedParts||={};
+     h.resolved[n]=true;
+     h.resolvedParts[n]={missing:true,correction:true,signature:true};
    }
  }
 }
 function recomputeContinuousResolutions(catId){
  const category=state.categories.find(c=>c.id===catId);
  if(!category||category.kind!=='continuous')return;
-
  const records=continuousChronological(catId);
 
- // 連續作業的 OK 全部由歷史先後重新推算，避免同日多筆、刪除、
- // 匯入舊資料或先前版本留下的 resolved 狀態互相衝突。
+ // DataLogicFix9：不再每次把所有舊 OK 清空後重算。
+ // 「未通過／取消 OK」只會由實際被修改的那一筆往更新紀錄刪除；
+ // 更舊紀錄既有的 OK 必須保留。這裡只負責把新的完成結果向前補 OK。
  for(const h of records){
-   h.resolved={};
-   h.resolvedParts={};
- }
- for(let i=0;i<records.length;i++){
-   applyContinuousResolution(records[i],records.slice(0,i));
- }
- for(const h of records){
-   h.manualResolved||={};
+   h.resolved||={};h.resolvedParts||={};h.manualResolved||={};
+   // 新規則不再由黃色／綠色等未通過狀態產生部分完成；清掉舊版遺留的部分註記。
+   for(const seat of Object.keys(h.resolvedParts)){
+     if(h.resolved?.[seat]===true||h.manualResolved?.[seat]===true)continue;
+     delete h.resolvedParts[seat];
+   }
    for(const [seat,flag] of Object.entries(h.manualResolved)){
      if(flag!==true)continue;
      const st=h.statuses?.[seat];
      if(!['red','yellow','green','ring','orange'].includes(st))continue;
-     h.resolved||={};h.resolvedParts||={};
      h.resolved[seat]=true;
      h.resolvedParts[seat]={missing:true,correction:true,signature:true};
    }
  }
+ for(let i=0;i<records.length;i++)applyContinuousResolution(records[i],records.slice(0,i));
 }
 function recomputeAllContinuousResolutions(){
  for(const c of state.categories)if(c.kind==='continuous')recomputeContinuousResolutions(c.id);
@@ -2709,7 +2688,7 @@ function commitHistoryOkEdits(){
          const pos=ordered.findIndex(x=>x.id===h.id);
          if(pos>=0){
            for(const later of ordered.slice(pos+1)){
-             // DataLogicFix8：取消舊紀錄的 OK 代表此進度其實仍未完成。
+             // DataLogicFix9：取消此筆 OK 只往更新紀錄失效；更舊紀錄完全不動。
              // 後續紀錄必須一起退回「同一個未完成狀態」，不能只刪 resolved，
              // 否則後面若仍是藍色通過，重新計算時會立刻把舊紀錄又補回 OK。
              later.statuses||={};
@@ -2809,7 +2788,7 @@ function saveHistoryRecordFromMain(){
        if(!(cancelled||(beforeManual&&changedToPending)))continue;
        if(h.manualResolved)delete h.manualResolved[n];
        for(const later of ordered.slice(pos+1)){
-         // DataLogicFix8：同狀態取消 OK 也視為重新確認「此進度尚未完成」。
+         // DataLogicFix9：同狀態取消 OK 視為重新確認「此進度尚未完成」，只往更新紀錄傳遞。
          // 後續紀錄一起退回目前這筆的未完成狀態，避免後續藍色/手動 OK
          // 在 recompute 時把剛取消的 OK 立刻補回來。
          later.statuses||={};
