@@ -1,4 +1,4 @@
-const CACHE='hw-checker-r8-sandbox-datalogicfix13-shell-v1';
+const CACHE='hw-r8-sandbox-syncfix14';
 const scopeRoot=()=>new URL('./',self.registration.scope).href;
 const indexUrl=()=>new URL('./index.html',self.registration.scope).href;
 async function cacheShell(){
@@ -17,7 +17,7 @@ self.addEventListener('install',event=>{
 });
 self.addEventListener('activate',event=>{event.waitUntil((async()=>{
   const keys=await caches.keys();
-  await Promise.all(keys.filter(k=>k.startsWith('hw-checker-')&&k!==CACHE).map(k=>caches.delete(k)));
+  await Promise.all(keys.filter(k=>k.startsWith('hw-r8-sandbox-syncfix14')&&k!==CACHE).map(k=>caches.delete(k)));
   await self.clients.claim();
   await cacheShell();
 })());});
