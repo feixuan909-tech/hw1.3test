@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox UIFix24｜逐座號三方安全合併修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox UIFix25｜逐座號三方安全合併修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -1005,9 +1005,28 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
  #overviewPanel.overview-sticky-mode .overview-scroll-tail{height:104px!important;min-height:104px!important;max-height:104px!important}
 }
 </style>
+
+<style id="uifix25-css">
+/* UIFix25：目前繳交情形獨立於作業登記收合區 */
+.current-submission-block{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.current-submission-title{font-weight:800;font-size:13px;color:#52677a;margin-bottom:7px}
+.current-submission-block .summary{margin-top:0}
+/* 歷史紀錄獨立收合 */
+.history-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.history-collapse-btn{padding:7px 10px;white-space:nowrap}
+#historyBody.collapsed{display:none}
+/* 個人紀錄手機欄寬微調：狀態略窄、類別／進度略寬，OK 保留小間距 */
+@media(max-width:760px){
+ #studentPanel .student-record-table col.student-col-category{width:18%!important}
+ #studentPanel .student-record-table col.student-col-date{width:20%!important}
+ #studentPanel .student-record-table col.student-col-progress{width:26%!important}
+ #studentPanel .student-record-table col.student-col-status{width:36%!important}
+ #studentPanel .student-quick-ok{margin-left:3px!important}
+}
+</style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox UIFix24</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox UIFix25</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -1164,10 +1183,22 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
     </div>
     <button id="updateHomeworkBtn" class="btn primary" type="button">更新</button>
   </div>
+</div>
+<div id="currentSubmissionBlock" class="current-submission-block">
+  <div class="current-submission-title">目前繳交情形</div>
   <div id="dailySummary" class="summary hidden"></div>
 </div>
 </section>
-<section class="card section"><div class="section-title">歷史紀錄</div><div class="small" style="margin-bottom:8px">按「編輯紀錄」會把該筆資料載入上方一般登記區，可用原本三種進度輸入方式與座號狀態按鈕修改；「補登 OK」則直接在歷史紀錄中批次處理。左右滑動時座號欄固定。</div><div class="history-table-wrap"><div class="history-table-scroll"><table class="history-table"><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div></div></section>
+<section id="historySection" class="card section">
+  <div class="history-section-head">
+    <div class="section-title" style="margin-bottom:0">歷史紀錄</div>
+    <button id="historyCollapseBtn" class="btn history-collapse-btn" type="button" aria-expanded="true">收起 ▲</button>
+  </div>
+  <div id="historyBody">
+    <div class="small" style="margin:8px 0">按「編輯紀錄」會把該筆資料載入上方一般登記區，可用原本三種進度輸入方式與座號狀態按鈕修改；「補登 OK」則直接在歷史紀錄中批次處理。左右滑動時座號欄固定。</div>
+    <div class="history-table-wrap"><div class="history-table-scroll"><table class="history-table"><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div></div>
+  </div>
+</section>
 </main></div>
 <script>
 "use strict";
@@ -1432,6 +1463,7 @@ function fmtDate(d){if(!d)return'';const[,m,day]=d.split('-');return`${Number(m)
 const MOBILE_UX_MAX=600;
 const MOBILE_CATEGORY_COLLAPSE_KEY='hwCheckerR8SandboxMobileCategoryCollapsedV1';
 const CONTACT_COLLAPSE_KEY='hwCheckerR8SandboxContactCollapsedV1';
+const HISTORY_COLLAPSE_KEY='hwHistoryCollapsedUIFix25V1';
 function readCollapsePref(key,mobileDefault){try{const v=localStorage.getItem(key);if(v==='1')return true;if(v==='0')return false}catch(e){}return isMobileUX()?mobileDefault:false}
 function writeCollapsePref(key,v){try{localStorage.setItem(key,v?'1':'0')}catch(e){}}
 let mobileCategoriesCollapsed=readCollapsePref(MOBILE_CATEGORY_COLLAPSE_KEY,true);
@@ -3071,6 +3103,16 @@ function setContactCollapsed(collapsed){
  btn.textContent=contactCollapsed?'展開 ▼':'收起 ▲';
  btn.setAttribute('aria-expanded',contactCollapsed?'false':'true');
 }
+let historyCollapsed=readCollapsePref(HISTORY_COLLAPSE_KEY,false);
+function setHistoryCollapsed(collapsed){
+ historyCollapsed=!!collapsed;
+ writeCollapsePref(HISTORY_COLLAPSE_KEY,historyCollapsed);
+ const body=$('historyBody'),btn=$('historyCollapseBtn');
+ if(!body||!btn)return;
+ body.classList.toggle('collapsed',historyCollapsed);
+ btn.textContent=historyCollapsed?'展開 ▼':'收起 ▲';
+ btn.setAttribute('aria-expanded',historyCollapsed?'false':'true');
+}
 $('mobileMoreBtn').addEventListener('click',()=>{
  const menu=$('mobileMoreMenu'),btn=$('mobileMoreBtn'),show=!menu.classList.contains('show');
  menu.classList.toggle('show',show);btn.textContent=show?'更多 ▴':'更多 ▾';btn.setAttribute('aria-expanded',show?'true':'false');
@@ -3079,10 +3121,12 @@ $('mobileCategoryToggleBtn').addEventListener('click',()=>{mobileCategoriesColla
 syncMobileUXClass();
 updateMobileCategoryUI();
 setContactCollapsed(contactCollapsed);
+setHistoryCollapsed(historyCollapsed);
 setupMobileTopbar();
 window.addEventListener('resize',()=>{syncMobileUXClass();setupMobileTopbar();updateMobileCategoryUI()});
 window.addEventListener('orientationchange',()=>setTimeout(()=>{syncMobileUXClass();setupMobileTopbar();updateMobileCategoryUI()},80));
 $('contactCollapseBtn').addEventListener('click',()=>setContactCollapsed(!contactCollapsed));
+$('historyCollapseBtn').addEventListener('click',()=>setHistoryCollapsed(!historyCollapsed));
 $('homeworkEntryCollapseBtn').addEventListener('click',()=>{
  const body=$('homeworkEntryBody'),btn=$('homeworkEntryCollapseBtn');
  const collapsed=!body.classList.contains('collapsed');
