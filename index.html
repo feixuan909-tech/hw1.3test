@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox SyncFix20｜Fix11乾淨基底同步修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox SyncFix21｜快速連續同步序列化修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -1007,7 +1007,7 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox SyncFix20</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox SyncFix21</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -3294,6 +3294,7 @@ const bridge=window.hwCloudBridge;
 let firebaseReady=false,auth=null,db=null,currentUser=null,docRef=null,unsubscribe=null;
 let authSessionReady=false,authBootGeneration=0;
 let queueTimer=null,applyingRemote=false,lastRemoteToken='',baseRemoteToken='',pendingUploadToken='',cloudExists=false,syncConflict=false;
+let uploadInFlight=false,uploadQueuedAfterFlight=false,lastClientWriteMs=0;
 const CLOUD_BASE_TOKEN_KEY='hwCheckerR8SandboxCloudBaseTokenV1';
 const CLOUD_DEVICE_ID_KEY='hwCheckerR8SandboxCloudDeviceIdV1';
 // Firestore 單一文件上限為 1 MiB。JSON 位元組數不是 Firestore 實際編碼大小，
@@ -3365,7 +3366,7 @@ async function waitForRestoredAuth(user,generation){
    authSessionReady=true;
    return true;
  }catch(err){
-   console.error('SyncFix20 auth restore failed',err);
+   console.error('SyncFix21 auth restore failed',err);
    if(generation===authBootGeneration){
      authSessionReady=false;
      setStatus('登入狀態未完成',`Google 登入狀態尚未恢復完成（${String(err?.code||'unknown')}）；本機資料仍完整保留。`,'err');
@@ -3437,7 +3438,7 @@ async function initFirebase(){
        startListener();
      }catch(err){
        if(generation!==authBootGeneration)return;
-       console.error('SyncFix20 cloud bootstrap failed',err);
+       console.error('SyncFix21 cloud bootstrap failed',err);
        setStatus('雲端讀取失敗',`Firebase 讀取失敗（${String(err?.code||'unknown')}）；本機資料仍完整保留。`,'err');
        setButtons();
      }
@@ -3459,8 +3460,17 @@ function startListener(){
    }
    const token=snapshotToken(snap);
    const ownUpdate=!!token&&(token===pendingUploadToken||token===lastRemoteToken);
-   if(bridge?.isDirty?.()&&!ownUpdate){enterSyncConflict();return}
+   const dirtyNow=!!bridge?.isDirty?.();
+   if(dirtyNow&&!ownUpdate){enterSyncConflict();return}
    syncConflict=false;
+   // SyncFix21：如果這是「自己上一筆」的雲端回應，但本機在上傳途中又有新修改，
+   // 只更新同步基準，不把舊 snapshot 套回本機，避免快速連續操作被舊資料蓋掉。
+   if(dirtyNow&&ownUpdate){
+     baseRemoteToken=token;
+     if(!snap.metadata.fromCache)rememberBaseToken(token);
+     setStatus('等待同步','上一筆已送達雲端；這台裝置還有較新的修改，準備接著同步…','wait');
+     return;
+   }
    applySnapshot(snap);baseRemoteToken=token;
    if(!bridge?.isDirty?.()&&!snap.metadata.fromCache)rememberBaseToken(token);
    const offlineNow=!navigator.onLine||snap.metadata.fromCache;
@@ -3543,7 +3553,14 @@ async function mergeNow(){
  }
 }
 async function uploadNow(force=false){
- if(!currentUser||!docRef||applyingRemote)return;
+ if(!currentUser||!docRef||applyingRemote)return false;
+ // SyncFix21：同一時間只允許一個雲端寫入流程。快速操作只記成「下一輪還要再傳」。
+ if(uploadInFlight){
+   uploadQueuedAfterFlight=true;
+   setStatus('等待同步','上一筆正在同步；新的修改已排在下一輪。','wait');
+   return false;
+ }
+ uploadInFlight=true;
  if(!authSessionReady){
    localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
    setStatus('登入狀態確認中','登入狀態尚未確認完成；資料已保存在本機，暫不寫入雲端。','wait');
@@ -3558,15 +3575,21 @@ async function uploadNow(force=false){
  }
  if(syncConflict&&!force){enterSyncConflict();return}
  const {setDoc,serverTimestamp,runTransaction,getDocFromServer}=window.__HW_FIREBASE.fsMod;
- const payload=bridge?.getState?.();if(!payload)return;
+ const payload=bridge?.getState?.();
+ if(!payload){uploadInFlight=false;return false}
+ let uploadedStateText='';
+ try{uploadedStateText=JSON.stringify(payload)}catch{}
  const sizeInfo=cloudSizeInfo(payload);
  if(sizeInfo.block){
    clearTimeout(queueTimer);queueTimer=null;pendingUploadToken='';
    setStatus('雲端資料容量過大',`目前待同步資料約 ${formatKiB(sizeInfo.bytes)}，已超過本工具的安全上傳門檻。為避免 Firestore 寫入失敗，已停止雲端上傳；本機資料仍完整保留。請先按「匯出備份」保存 JSON，再整理較舊歷史紀錄。`,'err');
    setButtons();
+   uploadInFlight=false;
    return false;
  }
- const token=Date.now(),newToken=String(token)+'|'+DEVICE_ID;
+ const token=Math.max(Date.now(),lastClientWriteMs+1);
+ lastClientWriteMs=token;
+ const newToken=String(token)+'|'+DEVICE_ID;
  const docData={schema:1,state:payload,ownerUid:currentUser.uid,clientUpdatedAt:token,writer:DEVICE_ID,serverUpdatedAt:serverTimestamp()};
  pendingUploadToken=newToken;
  setStatus(sizeInfo.warn?'資料量偏大，正在同步':'正在同步',sizeInfo.warn
@@ -3588,10 +3611,21 @@ async function uploadNow(force=false){
     tx.set(docRef,docData,{merge:false});
    });
   }
-  cloudExists=true;lastRemoteToken=newToken;baseRemoteToken=newToken;rememberBaseToken(newToken);pendingUploadToken='';syncConflict=false;bridge?.markSynced?.();setButtons();
-  setStatus(sizeInfo.warn?'已同步・容量偏高':'已同步',sizeInfo.warn
-    ?`已成功同步；目前雲端資料估計約 ${formatKiB(sizeInfo.bytes)}。建議先匯出 JSON 備份，並在方便時整理較舊歷史紀錄。`
-    :'這台裝置的紀錄已寫入雲端。',sizeInfo.warn?'wait':'ok');
+  cloudExists=true;lastRemoteToken=newToken;baseRemoteToken=newToken;rememberBaseToken(newToken);pendingUploadToken='';syncConflict=false;
+  let currentStateText='';
+  try{currentStateText=JSON.stringify(bridge?.getState?.())}catch{}
+  const changedDuringUpload=!!uploadedStateText&&currentStateText!==uploadedStateText;
+  if(!changedDuringUpload&&!uploadQueuedAfterFlight){
+    bridge?.markSynced?.();
+    setStatus(sizeInfo.warn?'已同步・容量偏高':'已同步',sizeInfo.warn
+      ?`已成功同步；目前雲端資料估計約 ${formatKiB(sizeInfo.bytes)}。建議先匯出 JSON 備份，並在方便時整理較舊歷史紀錄。`
+      :'這台裝置的紀錄已寫入雲端。',sizeInfo.warn?'wait':'ok');
+  }else{
+    localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
+    setStatus('等待同步','上一筆已同步；偵測到同步途中還有較新的修改，接著送出最新版…','wait');
+    uploadQueuedAfterFlight=true;
+  }
+  setButtons();
   return true;
  }catch(err){
   pendingUploadToken='';
@@ -3601,6 +3635,18 @@ async function uploadNow(force=false){
     return false;
   }
   throw err;
+ }finally{
+  uploadInFlight=false;
+  if(uploadQueuedAfterFlight&&!syncConflict&&navigator.onLine&&currentUser&&docRef){
+    uploadQueuedAfterFlight=false;
+    clearTimeout(queueTimer);
+    queueTimer=setTimeout(()=>uploadNow(false).catch(err=>{
+      console.error('cloud queued upload failed',err);
+      if(isLikelyNetworkError(err))setStatus('等待網路','目前看起來是網路／Firebase 暫時無法連線；本機資料仍保留，恢復網路後會再嘗試同步。','err');
+      else if(isLikelySizeWriteError(err))setStatus('雲端寫入容量錯誤','Firebase 回報資料量可能過大；本機資料仍保留。請先匯出 JSON 備份，再整理較舊歷史紀錄。','err');
+      else setStatus('雲端寫入失敗',`Firebase 寫入沒有成功（${String(err?.code||'unknown')}）；本機資料仍完整保留。`,'err');
+    }),120);
+  }
  }
 }
 async function downloadNow(){
@@ -3621,6 +3667,12 @@ function queuePush(){
    return;
  }
  if(syncConflict){enterSyncConflict();return}
+ if(uploadInFlight){
+   uploadQueuedAfterFlight=true;
+   localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
+   setStatus('等待同步','上一筆正在同步；新的修改已排在下一輪。','wait');
+   return;
+ }
  if(!navigator.onLine){
    clearTimeout(queueTimer);queueTimer=null;
    localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
