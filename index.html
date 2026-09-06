@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox OKLogic2｜總覽調整版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix1｜資料邏輯修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -948,6 +948,15 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
 .overview-progress-date{display:flex;align-items:center;justify-content:center;gap:10px;white-space:nowrap}
 .overview-progress-date .overview-date-only{display:inline-block}
 </style>
+<style id="r8-datalogicfix1-css">
+/* DataLogicFix1: 左側識別直行固定，右側資料獨立水平捲動。 */
+.overview-table .seat-col{position:sticky!important;left:0!important;background:#fff!important;z-index:6!important;box-shadow:2px 0 0 rgba(31,70,105,.08)}
+.overview-table thead .seat-col{background:#f7f9fc!important;z-index:9!important}
+/* 歷史紀錄按鈕保持單行；真的超寬時交給歷史區水平捲動。 */
+.history-table th:not(:first-child){min-width:150px}
+.history-table th button{white-space:nowrap;word-break:keep-all}
+.history-table-scroll{overscroll-behavior-x:contain}
+</style>
 </head>
 <body>
 <header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox OKLogic2</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
@@ -1411,6 +1420,8 @@ let historyEditId='';
 let historyEditDraft=null;
 let historyEditOriginalManual={};
 let historyEditOriginalStatuses={};
+let historyEditCancelledManual=new Set();
+let historyEditReturnDate='';
 let categoryDragId='';
 function normalizeCategoryName(v){
  return cleanText(v,30).trim().replace(/\s+/g,' ').toLocaleLowerCase('zh-Hant');
@@ -1845,7 +1856,7 @@ function renderStudentGrid(){
    const b=document.createElement('button');
    b.type='button';
    const originalH=historyEditId?state.history.find(x=>x.id===historyEditId):null;
-   const keepsOriginalOK=!!(originalH&&historyEditOriginalManual?.[n]===true&&(historyEditDraft?.[n]||'red')===(historyEditOriginalStatuses?.[n]||originalH.statuses?.[n]||'red'));
+   const keepsOriginalOK=!!(originalH&&isStatusFullyResolved(originalH,n)&&!historyEditCancelledManual.has(n)&&(historyEditDraft?.[n]||'red')===(historyEditOriginalStatuses?.[n]||originalH.statuses?.[n]||'red'));
    b.className=`num ${st} ${selectedStudents.has(n)?'selected':''} ${keepsOriginalOK?'history-ok-mark':''}`;
    b.textContent=n;
    b.addEventListener('click',()=>{
@@ -1872,12 +1883,21 @@ function renderStudentGrid(){
    grid.appendChild(b);
  }
 }
-function applyStatusToSelected(){const d=getDraft();selectedStudents.forEach(n=>d[n]=selectedStatus);save();selectedStudents.clear();renderStudentGrid()}
+function applyStatusToSelected(){
+ const d=getDraft();
+ selectedStudents.forEach(n=>{
+   d[n]=selectedStatus;
+   // 歷史編輯中只要重新指定過這位學生的狀態，舊的「手動補登 OK」即視為取消。
+   if(historyEditId&&historyEditOriginalManual?.[n]===true)historyEditCancelledManual.add(n);
+ });
+ save();selectedStudents.clear();renderStudentGrid();
+}
 function clearCurrentDraft(){
  if(historyEditId){
    const h=state.history.find(x=>x.id===historyEditId);
    historyEditDraft={};
    if(h)for(let n=1;n<=state.studentCount;n++)historyEditDraft[n]=h.statuses?.[n]||'red';
+   historyEditCancelledManual.clear();
    selectedStudents.clear();renderStudentGrid();return;
  }
  const k=draftKey(),prefix=k+'|';
@@ -1902,7 +1922,7 @@ function markAllPass(){
  }
  save();selectedStudents.clear();renderStudentGrid();
 }
-$('recordDate').addEventListener('change',()=>{selectedStudents.clear();renderStudentGrid();if(!historyEditId)renderCurrentCategorySummary()});
+$('recordDate').addEventListener('change',()=>{refreshToday();selectedStudents.clear();renderStudentGrid();if(!historyEditId)renderCurrentCategorySummary()});
 function resolvedPartState(h,n){
  const p=h.resolvedParts?.[n]||{};
  if(h.resolved?.[n])return {missing:true,correction:true,signature:true};
@@ -2043,6 +2063,7 @@ function showSameRecordChoice(c,date,content,progressType,d,idx){
 }
 function updateHomework(){
  if(historyEditId)return saveHistoryRecordFromMain();
+ refreshToday();
  const c=currentCat(),date=$('recordDate').value||TODAY,progressResult=buildContent();
  if(!validDate(date))return alert('登記日期不正確，請重新選擇日期。');
  if(progressResult.error){
@@ -2626,13 +2647,20 @@ function toggleHistoryOkEdit(id){
 
 
 function cancelHistoryRecordEdit(render=true){
+ const returnDate=historyEditReturnDate;
  historyEditId='';historyEditDraft=null;historyEditOriginalManual={};historyEditOriginalStatuses={};
+ historyEditCancelledManual.clear();historyEditReturnDate='';
+ refreshToday();
+ if($('recordDate'))$('recordDate').value=(validDate(returnDate)?returnDate:TODAY);
  selectedStudents.clear();progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
  if(render){renderProgress();renderHistoryMainEditBanner();renderStudentGrid();renderTable();renderCurrentCategorySummary()}
 }
 function startHistoryRecordEdit(id){
  const h=state.history.find(x=>x.id===id);if(!h)return;
  if(historyOkEditId){historyOkEditId='';historyOkPending.clear()}
+ refreshToday();
+ if(!historyEditId)historyEditReturnDate=$('recordDate')?.value||TODAY;
+ historyEditCancelledManual.clear();
  historyEditId=id;historyEditDraft={};
  for(let n=1;n<=state.studentCount;n++)historyEditDraft[n]=h.statuses?.[n]||'red';
  historyEditOriginalManual={...(h.manualResolved||{})};
@@ -2667,7 +2695,7 @@ function saveHistoryRecordFromMain(){
  for(const [seat,flag] of Object.entries(historyEditOriginalManual||{})){
    const st=h.statuses?.[seat],originalSt=historyEditOriginalStatuses?.[seat];
    // 舊 OK 只在原狀態沒有被改動時保留；一旦重新改狀態，就必須重新補登。
-   if(flag===true&&st===originalSt&&['red','yellow','green','ring','orange'].includes(st))h.manualResolved[seat]=true;
+   if(flag===true&&!historyEditCancelledManual.has(Number(seat))&&st===originalSt&&['red','yellow','green','ring','orange'].includes(st))h.manualResolved[seat]=true;
  }
  h.updated=nextUpdatedStamp();
  const c=state.categories.find(x=>x.id===h.catId);
@@ -2677,7 +2705,11 @@ function saveHistoryRecordFromMain(){
    for(const seat of Object.keys(h.manualResolved)){h.resolved[seat]=true;h.resolvedParts[seat]={missing:true,correction:true,signature:true}}
  }
  save();
+ const returnDate=historyEditReturnDate;
  historyEditId='';historyEditDraft=null;historyEditOriginalManual={};historyEditOriginalStatuses={};
+ historyEditCancelledManual.clear();historyEditReturnDate='';
+ refreshToday();
+ if($('recordDate'))$('recordDate').value=(validDate(returnDate)?returnDate:TODAY);
  selectedStudents.clear();progress={a:'',b:'',skipPages:'',unit:'L',unitNums:'',unitDetail:'',free:''};
  renderAll();
 }
@@ -2705,7 +2737,7 @@ function renderTable(){
      });
      th.append(progressDiv,dateDiv,viewHint);
    }
-   const controls=document.createElement('div');controls.style.cssText='display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:5px';
+   const controls=document.createElement('div');controls.style.cssText='display:flex;gap:4px;justify-content:center;flex-wrap:nowrap;margin-top:5px;white-space:nowrap';
    const recordEdit=document.createElement('button');
    recordEdit.type='button';recordEdit.className=`btn history-record-edit-btn ${historyEditId===h.id?'active':''}`;
    recordEdit.style.cssText='padding:4px 7px;font-size:11px';
@@ -2735,7 +2767,7 @@ function renderTable(){
  const historyTable=$('tableHead')?.closest('table');
  if(historyTable){
    // 1～少量紀錄優先使用固定寬度；欄位增加後自然超出，才出現水平捲動。
-   const need=Math.max(0,44+cols.length*150);
+   const need=Math.max(0,44+cols.length*158);
    historyTable.style.minWidth=need>0?`${need}px`:'0';
    historyTable.style.width=need<=760?'100%':'max-content';
  }
