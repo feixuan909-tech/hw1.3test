@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox SyncFix19｜Firestore 忽略 undefined 修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox SyncFix20｜Fix11乾淨基底同步修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -1007,7 +1007,7 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox SyncFix19</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox SyncFix20</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -1310,7 +1310,6 @@ let selectedStudents=new Set(),selectedStatus='blue',selectedContactStudents=new
 function saveLocalOnly(){localStorage.setItem(STORE,JSON.stringify(state))}
 function save(){
  saveLocalOnly();
- localWriteRevision++;
  localStorage.setItem(CLOUD_DIRTY_KEY,'1');
  if(window.hwCloud&&typeof window.hwCloud.queuePush==='function')window.hwCloud.queuePush();
 }
@@ -2793,7 +2792,7 @@ function saveHistoryRecordFromMain(){
        const after=h.statuses?.[n]||'red';
        const changedToPending=(before!==after&&after!=='blue');
        if(!(cancelled||(beforeManual&&changedToPending)))continue;
-       // SyncFix15：取消 OK 不只要刪 manualResolved，也必須刪掉此筆已經存在的
+       // DataLogicFix11：取消 OK 不只要刪 manualResolved，也必須刪掉此筆已經存在的
        // resolved / resolvedParts。Fix10 漏掉這兩個衍生欄位，recompute 時舊 OK 因此一直留著。
        if(h.manualResolved)delete h.manualResolved[n];
        if(h.resolved)delete h.resolved[n];
@@ -3327,7 +3326,6 @@ function getDeviceId(){
  return id;
 }
 const DEVICE_ID=getDeviceId();
-let uploadInFlight=false,uploadQueuedAfterFlight=false,localWriteRevision=0;
 function persistedBaseToken(){return localStorage.getItem(CLOUD_BASE_TOKEN_KEY)||''}
 function rememberBaseToken(token){localStorage.setItem(CLOUD_BASE_TOKEN_KEY,String(token||''))}
 
@@ -3335,20 +3333,6 @@ function setStatus(shortText,longText,kind=''){
  if(ui.short)ui.short.textContent=shortText;
  if(ui.long)ui.long.textContent=longText||shortText;
  if(ui.dot)ui.dot.className='cloud-dot'+(kind?' '+kind:'');
-}
-let cloudDiagStage='idle';
-function setCloudDiagStage(stage){cloudDiagStage=String(stage||'unknown')}
-function cloudDiagText(err){
- const code=String(err?.code||'unknown');
- const name=String(err?.name||'Error');
- const message=String(err?.message||err||'沒有錯誤訊息').replace(/\s+/g,' ').slice(0,260);
- return `階段：${cloudDiagStage}｜code：${code}｜${name}：${message}`;
-}
-function showCloudDiagnostic(err){
- const detail=cloudDiagText(err);
- console.error('SyncFix19 diagnostic',detail,err);
- setStatus('雲端寫入失敗',detail,'err');
- try{navigator.clipboard?.writeText?.(detail)}catch{}
 }
 function setButtons(){
  const signed=!!currentUser;
@@ -3370,26 +3354,21 @@ function enterSyncConflict(){
  clearTimeout(queueTimer);queueTimer=null;
  setStatus('同步衝突待處理','這台裝置與雲端都有新修改。建議先按「安全合併」；若要整份取代，才使用「以這台裝置為準上傳」或「從雲端載入」。','wait');setButtons();
 }
-function isAuthTimingError(err){
- const code=String(err?.code||'').toLowerCase(),msg=String(err?.message||'').toLowerCase();
- return code.includes('permission-denied')||code.includes('unauthenticated')||code.startsWith('auth/')||/auth|credential|token|permission/.test(msg);
-}
 async function waitForRestoredAuth(user,generation){
  authSessionReady=false;
  setStatus('登入狀態確認中','正在恢復 Google 登入狀態；確認完成前不會寫入雲端。','wait');
  setButtons();
  try{
-   // onAuthStateChanged 已有 user 後，再明確取得一次 ID token，讓 Firestore 的認證提供者完成初始化。
    await user.getIdToken(false);
-   await new Promise(resolve=>setTimeout(resolve,250));
+   await new Promise(resolve=>setTimeout(resolve,200));
    if(generation!==authBootGeneration||!currentUser||currentUser.uid!==user.uid)return false;
    authSessionReady=true;
    return true;
  }catch(err){
-   console.error('SyncFix19 auth restore failed',err);
+   console.error('SyncFix20 auth restore failed',err);
    if(generation===authBootGeneration){
      authSessionReady=false;
-     setStatus('登入狀態未完成','Google 登入狀態尚未恢復完成；本機資料仍完整保留。請稍後重試或重新登入。','err');
+     setStatus('登入狀態未完成',`Google 登入狀態尚未恢復完成（${String(err?.code||'unknown')}）；本機資料仍完整保留。`,'err');
      setButtons();
    }
    return false;
@@ -3427,19 +3406,16 @@ async function initFirebase(){
      if(unsubscribe){unsubscribe();unsubscribe=null}
      cloudExists=false;docRef=null;syncConflict=false;baseRemoteToken='';pendingUploadToken='';setButtons();
      if(!user){setStatus('雲端待登入','Firebase 已設定；請登入 Google 帳號開始同步。','wait');return}
-
-     // SyncDiag17：重新整理後先完整恢復 Auth，再允許任何 Firestore 讀寫。
      if(!await waitForRestoredAuth(user,generation))return;
      if(generation!==authBootGeneration||!currentUser||currentUser.uid!==user.uid)return;
-
      try{
        docRef=fsMod.doc(db,'users',user.uid,'apps','homework-rollcall-plus-r8-sandbox');
        setStatus('正在檢查雲端','登入狀態已確認，正在確認雲端是否已有紀錄…','wait');
-       const snap=await fsMod.getDocFromServer(docRef);
+       const snap=await fsMod.getDoc(docRef);
        if(generation!==authBootGeneration)return;
        cloudExists=snap.exists();baseRemoteToken=snapshotToken(snap);setButtons();
        if(!cloudExists){
-         await uploadNow(true);
+         await uploadNow();
          startListener();
          return;
        }
@@ -3461,15 +3437,8 @@ async function initFirebase(){
        startListener();
      }catch(err){
        if(generation!==authBootGeneration)return;
-       console.error('SyncFix19 cloud bootstrap failed',err);
-       if(isAuthTimingError(err)){
-         authSessionReady=false;
-         setStatus('登入狀態未完成',`雲端認證尚未就緒（${String(err?.code||'unknown')}）；本機資料仍完整保留。`,'err');
-       }else if(isLikelyNetworkError(err)){
-         setStatus('等待網路','目前無法讀取 Firebase；本機資料仍完整保留。','wait');
-       }else{
-         setStatus('雲端讀取失敗',`Firebase 讀取失敗（${String(err?.code||'unknown')}）；本機資料仍完整保留。`,'err');
-       }
+       console.error('SyncFix20 cloud bootstrap failed',err);
+       setStatus('雲端讀取失敗',`Firebase 讀取失敗（${String(err?.code||'unknown')}）；本機資料仍完整保留。`,'err');
        setButtons();
      }
    });
@@ -3489,22 +3458,11 @@ function startListener(){
      return;
    }
    const token=snapshotToken(snap);
-   const savedBase=persistedBaseToken();
-   const ownUpdate=!!token&&(token===pendingUploadToken||token===lastRemoteToken||token===savedBase);
-   if(bridge?.isDirty?.()){
-     // SyncDiag17：本機還有較新的修改時，絕不能把較舊的「自己的雲端回音」套回本機，否則會覆蓋剛做的新修改。
-     if(ownUpdate || (savedBase&&token===savedBase)){
-       if(token){baseRemoteToken=token;rememberBaseToken(token)}
-       syncConflict=false;
-       setStatus('等待同步','雲端已確認上一筆寫入；這台裝置還有較新的修改等待同步。','wait');
-       if(!uploadInFlight)queuePush();
-       return;
-     }
-     enterSyncConflict();return;
-   }
+   const ownUpdate=!!token&&(token===pendingUploadToken||token===lastRemoteToken);
+   if(bridge?.isDirty?.()&&!ownUpdate){enterSyncConflict();return}
    syncConflict=false;
    applySnapshot(snap);baseRemoteToken=token;
-   if(!snap.metadata.fromCache)rememberBaseToken(token);
+   if(!bridge?.isDirty?.()&&!snap.metadata.fromCache)rememberBaseToken(token);
    const offlineNow=!navigator.onLine||snap.metadata.fromCache;
    setStatus(offlineNow?'離線・待同步':'已同步',
      offlineNow?'目前沒有可靠的雲端連線；本機資料可繼續使用，恢復網路後會再同步。':'此裝置已和雲端同步。',offlineNow?'wait':'ok');
@@ -3585,105 +3543,64 @@ async function mergeNow(){
  }
 }
 async function uploadNow(force=false){
- if(!currentUser||!docRef||applyingRemote)return false;
- if(uploadInFlight){
-   uploadQueuedAfterFlight=true;
-   localStorage.setItem(CLOUD_DIRTY_KEY,'1');
-   setStatus('等待同步','前一筆正在寫入雲端；新的修改已排入下一輪同步。','wait');
-   return false;
- }
+ if(!currentUser||!docRef||applyingRemote)return;
  if(!authSessionReady){
-   localStorage.setItem(CLOUD_DIRTY_KEY,'1');
+   localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
    setStatus('登入狀態確認中','登入狀態尚未確認完成；資料已保存在本機，暫不寫入雲端。','wait');
    setButtons();
    return false;
  }
  if(!navigator.onLine){
-   localStorage.setItem(CLOUD_DIRTY_KEY,'1');
+   localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
    setStatus('離線・待同步','目前沒有網路；資料已保存在這台裝置，恢復網路後再同步到雲端。','wait');
    setButtons();
    return false;
  }
- if(syncConflict&&!force){enterSyncConflict();return false}
- const {setDoc,serverTimestamp,getDocFromServer}=window.__HW_FIREBASE.fsMod;
- setCloudDiagStage('A-取得本機資料');
- const payload=bridge?.getState?.();if(!payload)return false;
+ if(syncConflict&&!force){enterSyncConflict();return}
+ const {setDoc,serverTimestamp,runTransaction,getDocFromServer}=window.__HW_FIREBASE.fsMod;
+ const payload=bridge?.getState?.();if(!payload)return;
  const sizeInfo=cloudSizeInfo(payload);
  if(sizeInfo.block){
    clearTimeout(queueTimer);queueTimer=null;pendingUploadToken='';
-   setStatus('雲端資料容量過大',`目前待同步資料約 ${formatKiB(sizeInfo.bytes)}，已超過本工具的安全上傳門檻。本機資料仍完整保留。`,'err');
-   setButtons();return false;
- }
- const uploadRevision=localWriteRevision;
- uploadInFlight=true;
- try{
-   // SyncDiag17：先做一次伺服器版本檢查，再直接寫入；同時以單一上傳鎖避免快速連續操作重疊寫入。
-   // 不再用 transaction，避免單一裝置自己的 listener / transaction 互相競速而造成假衝突或寫入失敗。
-   if(!force){
-     setCloudDiagStage('B-讀取伺服器版本');
-     const serverSnap=await getDocFromServer(docRef);
-     const serverToken=snapshotToken(serverSnap);
-     const baseline=persistedBaseToken()||baseRemoteToken||'';
-     if(serverSnap.exists() && baseline && serverToken && serverToken!==baseline){
-       // 若雲端 token 正是本裝置上一筆已知寫入，視為自己的更新，不算衝突。
-       const ownKnown=(serverToken===lastRemoteToken||serverToken===pendingUploadToken);
-       if(!ownKnown){enterSyncConflict();return false}
-     }
-     if(serverToken){baseRemoteToken=serverToken;rememberBaseToken(serverToken)}
-   }
-   const now=Date.now();
-   const token=Math.max(now,Number(String(lastRemoteToken||'').split('|')[0]||0)+1);
-   const newToken=String(token)+'|'+DEVICE_ID;
-   const docData={schema:1,state:payload,ownerUid:currentUser.uid,clientUpdatedAt:token,writer:DEVICE_ID,serverUpdatedAt:serverTimestamp()};
-   pendingUploadToken=newToken;
-   setStatus('正在同步','正在把這台裝置的紀錄寫入雲端…','wait');
-   try{
-     setCloudDiagStage('C-Firestore setDoc');
-     await setDoc(docRef,docData,{merge:false});
-   }catch(firstErr){
-     // 重新整理後若 Firestore 比 Auth token 晚一拍，只針對認證時序錯誤做一次安全重試。
-     if(!isAuthTimingError(firstErr))throw firstErr;
-     console.warn('SyncFix19 auth timing retry',firstErr);
-     setCloudDiagStage('C2-強制刷新 ID Token');
-     await currentUser.getIdToken(true);
-     await new Promise(resolve=>setTimeout(resolve,300));
-     if(!currentUser||!authSessionReady)throw firstErr;
-     setCloudDiagStage('D-刷新Token後重試 setDoc');
-     await setDoc(docRef,docData,{merge:false});
-   }
-   cloudExists=true;lastRemoteToken=newToken;baseRemoteToken=newToken;rememberBaseToken(newToken);pendingUploadToken='';syncConflict=false;
-   const hasNewerLocal=(localWriteRevision!==uploadRevision)||uploadQueuedAfterFlight;
-   if(hasNewerLocal){
-     localStorage.setItem(CLOUD_DIRTY_KEY,'1');
-     setStatus('等待同步','上一筆已寫入雲端；還有較新的本機修改正在排隊。','wait');
-   }else{
-     bridge?.markSynced?.();
-     setStatus('已同步','這台裝置的紀錄已寫入雲端。','ok');
-   }
+   setStatus('雲端資料容量過大',`目前待同步資料約 ${formatKiB(sizeInfo.bytes)}，已超過本工具的安全上傳門檻。為避免 Firestore 寫入失敗，已停止雲端上傳；本機資料仍完整保留。請先按「匯出備份」保存 JSON，再整理較舊歷史紀錄。`,'err');
    setButtons();
-   return true;
- }catch(err){
-   pendingUploadToken='';
-   if(isLikelyNetworkError(err)){
-     localStorage.setItem(CLOUD_DIRTY_KEY,'1');
-     setStatus('等待網路','目前無法連上 Firebase；本機資料仍完整保留，恢復連線後會再同步。','wait');
-     return false;
-   }
-   if(isLikelySizeWriteError(err)){
-     setStatus('雲端寫入容量錯誤','Firebase 回報資料量可能過大；本機資料仍完整保留。','err');
-     return false;
-   }
-   console.error('SyncFix19 upload failed',err);
-   showCloudDiagnostic(err);
    return false;
- }finally{
-   uploadInFlight=false;
-   const rerun=uploadQueuedAfterFlight;
-   uploadQueuedAfterFlight=false;
-   if((rerun||bridge?.isDirty?.())&&currentUser&&docRef&&authSessionReady&&navigator.onLine&&!syncConflict){
-     clearTimeout(queueTimer);
-     queueTimer=setTimeout(()=>uploadNow(false),250);
-   }
+ }
+ const token=Date.now(),newToken=String(token)+'|'+DEVICE_ID;
+ const docData={schema:1,state:payload,ownerUid:currentUser.uid,clientUpdatedAt:token,writer:DEVICE_ID,serverUpdatedAt:serverTimestamp()};
+ pendingUploadToken=newToken;
+ setStatus(sizeInfo.warn?'資料量偏大，正在同步':'正在同步',sizeInfo.warn
+   ?`目前待同步資料約 ${formatKiB(sizeInfo.bytes)}，已接近單一雲端文件的安全容量；這次仍會嘗試同步，建議近期匯出 JSON 備份並整理舊紀錄。`
+   :'正在把這台裝置的紀錄安全地寫入雲端…','wait');
+ try{
+  if(force)await setDoc(docRef,docData,{merge:false});
+  else{
+   // v5.47：先向伺服器確認目前版本，再進 transaction。
+   // 這能避免手機離線後恢復網路時，監聽器與自動上傳競速而漏掉衝突。
+   const baseline=persistedBaseToken()||baseRemoteToken;
+   const serverSnap=await getDocFromServer(docRef);
+   const serverToken=snapshotToken(serverSnap);
+   if(serverSnap.exists()&&baseline&&serverToken!==baseline){const err=new Error('SYNC_CONFLICT');err.code='HW_SYNC_CONFLICT';throw err}
+   baseRemoteToken=baseline||serverToken;
+   await runTransaction(db,async tx=>{
+    const current=await tx.get(docRef),remoteToken=snapshotToken(current);
+    if(current.exists()&&remoteToken!==baseRemoteToken){const err=new Error('SYNC_CONFLICT');err.code='HW_SYNC_CONFLICT';throw err}
+    tx.set(docRef,docData,{merge:false});
+   });
+  }
+  cloudExists=true;lastRemoteToken=newToken;baseRemoteToken=newToken;rememberBaseToken(newToken);pendingUploadToken='';syncConflict=false;bridge?.markSynced?.();setButtons();
+  setStatus(sizeInfo.warn?'已同步・容量偏高':'已同步',sizeInfo.warn
+    ?`已成功同步；目前雲端資料估計約 ${formatKiB(sizeInfo.bytes)}。建議先匯出 JSON 備份，並在方便時整理較舊歷史紀錄。`
+    :'這台裝置的紀錄已寫入雲端。',sizeInfo.warn?'wait':'ok');
+  return true;
+ }catch(err){
+  pendingUploadToken='';
+  if(err?.code==='HW_SYNC_CONFLICT'||String(err?.message||'').includes('SYNC_CONFLICT')){enterSyncConflict();return false}
+  if(isLikelySizeWriteError(err)){
+    setStatus('雲端寫入容量錯誤','Firebase 回報資料量可能過大；本機資料仍完整保留。請先按「匯出備份」保存 JSON，再整理舊歷史紀錄後重試。','err');
+    return false;
+  }
+  throw err;
  }
 }
 async function downloadNow(){
@@ -3698,7 +3615,7 @@ function queuePush(){
  if(!currentUser||!docRef||applyingRemote)return;
  if(!authSessionReady){
    clearTimeout(queueTimer);queueTimer=null;
-   localStorage.setItem(CLOUD_DIRTY_KEY,'1');
+   localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
    setStatus('登入狀態確認中','登入狀態尚未確認完成；本機變更會在認證完成後再同步。','wait');
    setButtons();
    return;
@@ -3720,7 +3637,7 @@ function queuePush(){
    }else if(isLikelySizeWriteError(err)){
      setStatus('雲端寫入容量錯誤','Firebase 回報資料量可能過大；本機資料仍保留。請先匯出 JSON 備份，再整理較舊歷史紀錄。','err');
    }else{
-     showCloudDiagnostic(err);
+     setStatus('雲端寫入失敗',`Firebase 寫入沒有成功（${String(err?.code||'unknown')}）；本機資料仍完整保留。`,'err');
    }
  }),700);
 }
@@ -3751,7 +3668,7 @@ async function signIn(){
 }
 async function signOutNow(){
  if(auth)await window.__HW_FIREBASE.authMod.signOut(auth);
- authSessionReady=false;authBootGeneration++;currentUser=null;setButtons();setStatus('雲端待登入','已登出雲端；這台裝置上的本機資料仍保留。','wait');
+ currentUser=null;setButtons();setStatus('雲端待登入','已登出雲端；這台裝置上的本機資料仍保留。','wait');
 }
 window.hwCloud={
  queuePush,
