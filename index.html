@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix9｜方向傳遞定版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix10｜編輯取消OK儲存修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -1007,7 +1007,7 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix9</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix10</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -1473,6 +1473,7 @@ let historyEditId='';
 let historyEditDraft=null;
 let historyEditOriginalManual={};
 let historyEditOriginalStatuses={};
+let historyEditOriginalResolved={};
 let historyEditCancelledManual=new Set();
 let historyEditReturnDate='';
 let categoryDragId='';
@@ -1909,7 +1910,7 @@ function renderStudentGrid(){
    const b=document.createElement('button');
    b.type='button';
    const originalH=historyEditId?state.history.find(x=>x.id===historyEditId):null;
-   const keepsOriginalOK=!!(originalH&&isStatusFullyResolved(originalH,n)&&!historyEditCancelledManual.has(n)&&(historyEditDraft?.[n]||'red')===(historyEditOriginalStatuses?.[n]||originalH.statuses?.[n]||'red'));
+   const keepsOriginalOK=!!(originalH&&historyEditOriginalResolved?.[n]===true&&!historyEditCancelledManual.has(n)&&(historyEditDraft?.[n]||'red')===(historyEditOriginalStatuses?.[n]||originalH.statuses?.[n]||'red'));
    b.className=`num ${st} ${selectedStudents.has(n)?'selected':''} ${keepsOriginalOK?'history-ok-mark':''}`;
    b.textContent=n;
    b.addEventListener('click',()=>{
@@ -1945,11 +1946,14 @@ function applyStatusToSelected(){
    if(historyEditId){
      const originalH=state.history.find(x=>x.id===historyEditId);
      const originalSt=historyEditOriginalStatuses?.[n]||originalH?.statuses?.[n]||'red';
-     if(originalH&&isStatusFullyResolved(originalH,n)&&selectedStatus===originalSt)historyEditCancelledManual.add(n);
-     else if(historyEditOriginalManual?.[n]===true)historyEditCancelledManual.add(n);
+     // DataLogicFix10：以「進入編輯當下」的完成狀態判定取消 OK，避免儲存前重算/同步影響判定。
+     if(originalH&&historyEditOriginalResolved?.[n]===true&&selectedStatus===originalSt)historyEditCancelledManual.add(n);
+     else if(historyEditOriginalManual?.[n]===true&&selectedStatus!=='blue')historyEditCancelledManual.add(n);
    }
  });
- save();selectedStudents.clear();renderStudentGrid();
+ // 歷史編輯使用暫存草稿；此時不可先 save() 未修改的正式 state，真正寫入只在「儲存歷史修改」。
+ if(!historyEditId)save();
+ selectedStudents.clear();renderStudentGrid();
 }
 function clearCurrentDraft(){
  if(historyEditId){
@@ -2720,7 +2724,7 @@ function toggleHistoryOkEdit(id){
 
 function cancelHistoryRecordEdit(render=true){
  const returnDate=historyEditReturnDate;
- historyEditId='';historyEditDraft=null;historyEditOriginalManual={};historyEditOriginalStatuses={};
+ historyEditId='';historyEditDraft=null;historyEditOriginalManual={};historyEditOriginalStatuses={};historyEditOriginalResolved={};
  historyEditCancelledManual.clear();historyEditReturnDate='';
  refreshToday();
  if($('recordDate'))$('recordDate').value=(validDate(returnDate)?returnDate:TODAY);
@@ -2737,6 +2741,8 @@ function startHistoryRecordEdit(id){
  for(let n=1;n<=state.studentCount;n++)historyEditDraft[n]=h.statuses?.[n]||'red';
  historyEditOriginalManual={...(h.manualResolved||{})};
  historyEditOriginalStatuses={...(h.statuses||{})};
+ historyEditOriginalResolved={};
+ for(let n=1;n<=state.studentCount;n++)historyEditOriginalResolved[n]=isStatusFullyResolved(h,n);
  state.currentCategory=h.catId;
  $('recordDate').value=h.date;
  const entryBody=$('homeworkEntryBody'),entryBtn=$('homeworkEntryCollapseBtn');
@@ -2819,7 +2825,7 @@ function saveHistoryRecordFromMain(){
  }
  save();
  const returnDate=historyEditReturnDate;
- historyEditId='';historyEditDraft=null;historyEditOriginalManual={};historyEditOriginalStatuses={};
+ historyEditId='';historyEditDraft=null;historyEditOriginalManual={};historyEditOriginalStatuses={};historyEditOriginalResolved={};
  historyEditCancelledManual.clear();historyEditReturnDate='';
  refreshToday();
  if($('recordDate'))$('recordDate').value=(validDate(returnDate)?returnDate:TODAY);
