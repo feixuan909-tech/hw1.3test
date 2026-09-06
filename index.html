@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox MergeFix23｜逐座號三方安全合併修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox UIFix24｜逐座號三方安全合併修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -1007,7 +1007,7 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox MergeFix23</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox UIFix24</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -1430,7 +1430,11 @@ function recordHasPending(h){if(!h)return false;for(let n=1;n<=state.studentCoun
 function fmtDate(d){if(!d)return'';const[,m,day]=d.split('-');return`${Number(m)}/${Number(day)}`}
 
 const MOBILE_UX_MAX=600;
-let mobileCategoriesCollapsed=false;
+const MOBILE_CATEGORY_COLLAPSE_KEY='hwCheckerR8SandboxMobileCategoryCollapsedV1';
+const CONTACT_COLLAPSE_KEY='hwCheckerR8SandboxContactCollapsedV1';
+function readCollapsePref(key,mobileDefault){try{const v=localStorage.getItem(key);if(v==='1')return true;if(v==='0')return false}catch(e){}return isMobileUX()?mobileDefault:false}
+function writeCollapsePref(key,v){try{localStorage.setItem(key,v?'1':'0')}catch(e){}}
+let mobileCategoriesCollapsed=readCollapsePref(MOBILE_CATEGORY_COLLAPSE_KEY,true);
 function isMobileUX(){
  const narrowViewport=window.matchMedia(`(max-width:${MOBILE_UX_MAX}px)`).matches;
  const coarsePointer=window.matchMedia('(pointer:coarse)').matches||window.matchMedia('(any-pointer:coarse)').matches;
@@ -3058,9 +3062,10 @@ function finishContact(){
  if(!red.length&&!green.length&&!yellow.length&&!leave.length)x+='<div class="small">目前沒有需要追蹤的座號。</div>';
  $('contactSummary').innerHTML=x;$('contactSummary').classList.remove('hidden');save();
 }
-let contactCollapsed=false;
+let contactCollapsed=readCollapsePref(CONTACT_COLLAPSE_KEY,true);
 function setContactCollapsed(collapsed){
  contactCollapsed=!!collapsed;
+ writeCollapsePref(CONTACT_COLLAPSE_KEY,contactCollapsed);
  const body=$('contactBody'),btn=$('contactCollapseBtn');
  body.classList.toggle('collapsed',contactCollapsed);
  btn.textContent=contactCollapsed?'展開 ▼':'收起 ▲';
@@ -3070,10 +3075,10 @@ $('mobileMoreBtn').addEventListener('click',()=>{
  const menu=$('mobileMoreMenu'),btn=$('mobileMoreBtn'),show=!menu.classList.contains('show');
  menu.classList.toggle('show',show);btn.textContent=show?'更多 ▴':'更多 ▾';btn.setAttribute('aria-expanded',show?'true':'false');
 });
-$('mobileCategoryToggleBtn').addEventListener('click',()=>{mobileCategoriesCollapsed=!mobileCategoriesCollapsed;updateMobileCategoryUI()});
+$('mobileCategoryToggleBtn').addEventListener('click',()=>{mobileCategoriesCollapsed=!mobileCategoriesCollapsed;writeCollapsePref(MOBILE_CATEGORY_COLLAPSE_KEY,mobileCategoriesCollapsed);updateMobileCategoryUI()});
 syncMobileUXClass();
 updateMobileCategoryUI();
-setContactCollapsed(false);
+setContactCollapsed(contactCollapsed);
 setupMobileTopbar();
 window.addEventListener('resize',()=>{syncMobileUXClass();setupMobileTopbar();updateMobileCategoryUI()});
 window.addEventListener('orientationchange',()=>setTimeout(()=>{syncMobileUXClass();setupMobileTopbar();updateMobileCategoryUI()},80));
@@ -3330,7 +3335,7 @@ function getDeviceId(){
 const DEVICE_ID=getDeviceId();
 function persistedBaseToken(){return localStorage.getItem(CLOUD_BASE_TOKEN_KEY)||''}
 function rememberBaseToken(token){localStorage.setItem(CLOUD_BASE_TOKEN_KEY,String(token||''))}
-// MergeFix23：除了版本 token，也保留「上次兩端一致時的正式資料快照」。
+// UIFix24：除了版本 token，也保留「上次兩端一致時的正式資料快照」。
 // 安全合併時用它做三方比較，才能分辨「本機改了誰」與「另一台改了誰」，
 // 避免用整筆 history 的 updated 新舊直接覆蓋另一台裝置的不同學生修改。
 function rememberBaseState(raw){
