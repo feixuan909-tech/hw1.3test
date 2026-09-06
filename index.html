@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox ReturnSlip27｜個人紀錄＋歷史完成章修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox ReturnSlip28｜個人紀錄順序＋回條人數統計修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -1029,7 +1029,7 @@ body.return-slip-mode #homeworkStatusbar{outline:1px solid rgba(184,139,55,.12);
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox ReturnSlip27</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox ReturnSlip28</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -2241,7 +2241,7 @@ let independentSummaryViewId='';
 function renderSummary(rec){
  const groups=summaryStatusGroups(rec),c=state.categories.find(x=>x.id===rec?.catId)||currentCat(),slip=isReturnSlipCategory(c);
  const labels=slip?Object.fromEntries(Object.keys(RETURN_SLIP_DEFAULT_LABELS).map(st=>[st,[getReturnSlipLabel(st,c),st]])):{orange:['請假','orange'],red:['未交／未寫','red'],green:['未簽','green'],ring:['未訂簽','ring'],yellow:['未訂正','yellow']};
- const lines=Object.entries(groups).filter(([,v])=>v.length).map(([k,v])=>`<div class="summary-line"><span class="dot ${labels[k][1]}"></span><b>${esc(labels[k][0])}：</b>${v.join('、')}</div>`).join('');
+ const lines=Object.entries(groups).filter(([,v])=>v.length).map(([k,v])=>`<div class="summary-line"><span class="dot ${labels[k][1]}"></span><b>${esc(labels[k][0])}${slip?`－${v.length}人`:''}：</b>${v.join('、')}</div>`).join('');
  const tail=slip?(isReturnSlipRecordComplete(rec)?'<div class="small" style="margin-top:7px">✓ 此筆回條已全部完成。</div>':'<div class="small" style="margin-top:7px">仍有未交／補繳／請假者，此筆尚未全部完成。</div>'):'';
  $('dailySummary').innerHTML=`<div class="current-status-heading"><h4 style="margin:0">${esc(c.name)}｜${rec.content?esc(rec.content)+'｜':''}${rec.date}</h4><span class="small">目前繳交情況</span></div>${lines||'<div class="small" style="margin-top:6px">目前沒有需要追蹤的狀態。</div>'}${tail}`;
  $('dailySummary').classList.remove('hidden');
@@ -2450,23 +2450,6 @@ function renderStudentRecord(){
    });
    out+=`<section class="student-record-section"><h4>連續作業｜最新一期</h4><div class="student-record-table-wrap"><table class="student-record-table"><colgroup><col class="student-col-category"><col class="student-col-date"><col class="student-col-progress"><col class="student-col-status"></colgroup><thead><tr><th>類別</th><th>日期</th><th>進度</th><th>狀態</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
  }
- if(returnSlips.length){
-   let slipRows=[];
-   returnSlips.forEach((c,catIndex)=>{
-     const recs=state.history.filter(h=>h.catId===c.id).sort(compareHistory);
-     recs.forEach((h,recordIndex)=>slipRows.push({c,h,catIndex,recordIndex,pending:studentRecordIsPending(h,selectedStudentSeat)}));
-   });
-   if(studentRecordSortMode==='pending')slipRows.sort((a,b)=>Number(b.pending)-Number(a.pending)||a.catIndex-b.catIndex||a.recordIndex-b.recordIndex);
-   let completedStarted=false,breakAdded=false;
-   const rows=slipRows.map(({c,h,pending})=>{
-     if(!pending)completedStarted=true;
-     const addBreak=studentRecordSortMode==='pending'&&completedStarted&&!pending&&!breakAdded;
-     if(addBreak)breakAdded=true;
-     const st=h.statuses?.[selectedStudentSeat]||'red';
-     return `<tr${addBreak?' class="student-record-priority-break"':''}><td>${esc(c.name)}</td><td>${h.date}</td><td>${h.content?esc(h.content):'—'}</td><td>${statusText(st,h,selectedStudentSeat)}</td></tr>`;
-   }).join('');
-   out+=`<section class="student-record-section"><h4>回條｜全部紀錄</h4><div class="student-record-table-wrap"><table class="student-record-table"><colgroup><col class="student-col-category"><col class="student-col-date"><col class="student-col-progress"><col class="student-col-status"></colgroup><thead><tr><th>回條</th><th>日期</th><th>標題</th><th>實際結果</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
- }
  if(independent.length){
    // alpha.43：獨立項目以「每一筆紀錄」判斷待處理，而不是只看整個類別。
    // 這樣同一類別中，未完成的題目／篇目也會真正浮到已通過紀錄之前。
@@ -2487,6 +2470,23 @@ function renderStudentRecord(){
      return `<tr${addBreak?' class="student-record-priority-break"':''}><td>${esc(c.name)}</td><td>${h.date}</td><td>${h.content?esc(h.content):'—'}</td><td>${statusText(st,h,selectedStudentSeat)}${studentQuickOkButton(h,selectedStudentSeat)}</td></tr>`;
    }).join('');
    out+=`<section class="student-record-section"><h4>獨立項目｜全部紀錄</h4><div class="student-record-table-wrap"><table class="student-record-table"><colgroup><col class="student-col-category"><col class="student-col-date"><col class="student-col-progress"><col class="student-col-status"></colgroup><thead><tr><th>類別</th><th>日期</th><th>進度／標題</th><th>狀態</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+ }
+ if(returnSlips.length){
+   let slipRows=[];
+   returnSlips.forEach((c,catIndex)=>{
+     const recs=state.history.filter(h=>h.catId===c.id).sort(compareHistory);
+     recs.forEach((h,recordIndex)=>slipRows.push({c,h,catIndex,recordIndex,pending:studentRecordIsPending(h,selectedStudentSeat)}));
+   });
+   if(studentRecordSortMode==='pending')slipRows.sort((a,b)=>Number(b.pending)-Number(a.pending)||a.catIndex-b.catIndex||a.recordIndex-b.recordIndex);
+   let completedStarted=false,breakAdded=false;
+   const rows=slipRows.map(({c,h,pending})=>{
+     if(!pending)completedStarted=true;
+     const addBreak=studentRecordSortMode==='pending'&&completedStarted&&!pending&&!breakAdded;
+     if(addBreak)breakAdded=true;
+     const st=h.statuses?.[selectedStudentSeat]||'red';
+     return `<tr${addBreak?' class="student-record-priority-break"':''}><td>${esc(c.name)}</td><td>${h.date}</td><td>${h.content?esc(h.content):'—'}</td><td>${statusText(st,h,selectedStudentSeat)}</td></tr>`;
+   }).join('');
+   out+=`<section class="student-record-section"><h4>回條｜全部紀錄</h4><div class="student-record-table-wrap"><table class="student-record-table"><colgroup><col class="student-col-category"><col class="student-col-date"><col class="student-col-progress"><col class="student-col-status"></colgroup><thead><tr><th>回條</th><th>日期</th><th>標題</th><th>實際結果</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
  }
  body.innerHTML=out;
  bindStudentQuickOkButtons();
@@ -3032,7 +3032,7 @@ function renderTable(){
    });
  });
 }
-// ReturnSlip27：回條個人紀錄使用實際結果、禁止個人補登 OK；全班完成歷史欄顯示 OK 完成章。
+// ReturnSlip28：回條個人紀錄置於獨立項目之後；繳交情形顯示各結果人數；既有回條 OK 隔離與完成章維持。
 function showHistoryDeleteConfirm(h){
  const existing=$('historyDeleteConfirm');
  if(existing)existing.remove();
