@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix3｜連續補OK與版面修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix4｜連續OK規則與歷史排序修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -996,10 +996,18 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
     max-height:210px!important;
   }
 }
+
+/* DataLogicFix4：固定表頭再縮短；尾端只需讓最後資料停在表頭下約 3～4 橫列。 */
+#overviewPanel.overview-sticky-mode .overview-table-wrap{height:min(36vh,310px)!important}
+#overviewPanel.overview-sticky-mode .overview-scroll-tail{height:112px!important;min-height:112px!important;max-height:112px!important}
+@media(max-width:760px){
+ #overviewPanel.overview-sticky-mode .overview-table-wrap{height:min(34vh,260px)!important}
+ #overviewPanel.overview-sticky-mode .overview-scroll-tail{height:104px!important;min-height:104px!important;max-height:104px!important}
+}
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix3</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix4</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -1263,7 +1271,7 @@ function sanitizeState(raw,keepDrafts=false){
       s.history.push({
         id,catId,date:h.date,content:cleanText(h.content,100),workLabel:cleanText(h.workLabel,6),
         progressType:['pages','unit','free','none'].includes(h.progressType)?h.progressType:'free',
-        statuses,resolved,resolvedParts,manualResolved,updated:Number.isFinite(Number(h.updated))?Number(h.updated):Date.now()
+        statuses,resolved,resolvedParts,manualResolved,createdAt:Number.isFinite(Number(h.createdAt))?Number(h.createdAt):undefined,updated:Number.isFinite(Number(h.updated))?Number(h.updated):Date.now()
       });
     }
   }
@@ -1409,8 +1417,10 @@ function getDraft(){
  return state.drafts[k];
 }
 function compareHistory(a,b){
- const byDate=String(b.date).localeCompare(String(a.date));
- return byDate||Number(b.updated||0)-Number(a.updated||0);
+ // DataLogicFix4：歷史紀錄左右位置只看「首次成立」順序；編輯不改位置。
+ const ai=state.history.indexOf(a),bi=state.history.indexOf(b);
+ const ac=historyCreationStamp(a,ai),bc=historyCreationStamp(b,bi);
+ return bc-ac||bi-ai;
 }
 function latestRecord(catId){return state.history.filter(h=>h.catId===catId).sort(compareHistory)[0]||null}
 function recordHasPending(h){if(!h)return false;for(let n=1;n<=state.studentCount;n++){const st=h.statuses[n];if(['red','yellow','green','ring'].includes(st)&&!h.resolved?.[n])return true}return false}
@@ -2091,6 +2101,7 @@ function commitHomeworkRecord(c,date,content,progressType,d,mode='new',existingI
    resolved:mode==='overwrite'&&existing?(existing.resolved||{}):{},
    resolvedParts:mode==='overwrite'&&existing?(existing.resolvedParts||{}):{},
    manualResolved:mode==='overwrite'&&existing?(existing.manualResolved||{}):{},
+   createdAt:mode==='overwrite'&&existing?(Number(existing.createdAt)||historyCreationStamp(existing,existingIndex)):Date.now(),
    updated:nextUpdatedStamp()
  };
  if(mode==='overwrite'&&existingIndex>=0)state.history[existingIndex]=rec;
@@ -2761,6 +2772,21 @@ function saveHistoryRecordFromMain(){
    const ordered=continuousChronological(h.catId);
    const pos=ordered.findIndex(x=>x.id===h.id);
    if(pos>=0){
+     // DataLogicFix4：某筆的完成判定被取消／改回未完成時，只從該筆往後失效；
+     // 更早紀錄不受影響。較新紀錄日後再次通過或補登 OK，recompute 會再向前補 OK。
+     for(let n=1;n<=state.studentCount;n++){
+       const beforeManual=historyEditOriginalManual?.[n]===true;
+       const cancelled=historyEditCancelledManual.has(n);
+       const before=historyEditOriginalStatuses?.[n]||'red';
+       const after=h.statuses?.[n]||'red';
+       const changedToPending=(before!==after&&after!=='blue');
+       if(!(cancelled||(beforeManual&&changedToPending)))continue;
+       if(h.manualResolved)delete h.manualResolved[n];
+       for(const later of ordered.slice(pos+1)){
+         if(later.manualResolved)delete later.manualResolved[n];
+         later.updated=nextUpdatedStamp();
+       }
+     }
      for(let n=1;n<=state.studentCount;n++){
        const before=historyEditOriginalStatuses?.[n]||'red';
        const after=h.statuses?.[n]||'red';
@@ -2816,10 +2842,10 @@ function renderTable(){
    const recordEdit=document.createElement('button');
    recordEdit.type='button';recordEdit.className=`btn history-record-edit-btn ${historyEditId===h.id?'active':''}`;
    recordEdit.style.cssText='padding:4px 7px;font-size:11px';
-   recordEdit.textContent=historyEditId===h.id?'編輯中':'編輯紀錄';
-   recordEdit.title='把這筆歷史資料載入上方一般登記區修改';
-   recordEdit.disabled=historyEditId===h.id;
-   recordEdit.addEventListener('click',()=>startHistoryRecordEdit(h.id));
+   recordEdit.textContent=historyEditId===h.id?'取消編輯':'編輯紀錄';
+   recordEdit.title=historyEditId===h.id?'取消這次尚未儲存的歷史修改':'把這筆歷史資料載入上方一般登記區修改';
+   recordEdit.disabled=false;
+   recordEdit.addEventListener('click',()=>{if(historyEditId===h.id)cancelHistoryRecordEdit();else startHistoryRecordEdit(h.id)});
    controls.appendChild(recordEdit);
    {
      const okEdit=document.createElement('button');

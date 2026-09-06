@@ -1,4 +1,4 @@
-const CACHE='hw-checker-r8-sandbox-datalogicfix3-shell-v1';
+const CACHE='hw-checker-r8-sandbox-datalogicfix4-shell-v1';
 self.addEventListener('install',event=>{self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil((async()=>{
   const keys=await caches.keys();
