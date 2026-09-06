@@ -1,4 +1,4 @@
-const CACHE='hw-r8-sandbox-syncfix18-shell-v1';
+const CACHE='hw-r8-sandbox-syncfix19-shell-v1';
 const scopeRoot=()=>new URL('./',self.registration.scope).href;
 const indexUrl=()=>new URL('./index.html',self.registration.scope).href;
 async function cacheShell(){
