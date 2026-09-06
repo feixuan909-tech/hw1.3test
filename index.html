@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix12｜離線同步修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix13｜編輯取消OK寫入核心修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -1007,7 +1007,7 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix12</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix13</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -2792,7 +2792,7 @@ function saveHistoryRecordFromMain(){
        const after=h.statuses?.[n]||'red';
        const changedToPending=(before!==after&&after!=='blue');
        if(!(cancelled||(beforeManual&&changedToPending)))continue;
-       // DataLogicFix11：取消 OK 不只要刪 manualResolved，也必須刪掉此筆已經存在的
+       // DataLogicFix13：取消 OK 不只要刪 manualResolved，也必須刪掉此筆已經存在的
        // resolved / resolvedParts。Fix10 漏掉這兩個衍生欄位，recompute 時舊 OK 因此一直留著。
        if(h.manualResolved)delete h.manualResolved[n];
        if(h.resolved)delete h.resolved[n];
@@ -3292,8 +3292,7 @@ const ui={
 };
 const bridge=window.hwCloudBridge;
 let firebaseReady=false,auth=null,db=null,currentUser=null,docRef=null,unsubscribe=null;
-let queueTimer=null,applyingRemote=false,lastRemoteToken='',baseRemoteToken='',pendingUploadToken='',cloudExists=false,syncConflict=false;
-let uploadInFlight=false,uploadQueuedAfterFlight=false,lastClientWriteMs=0;
+let queueTimer=null,applyingRemote=false,lastRemoteToken='',baseRemoteToken='',pendingUploadToken='',cloudExists=false,syncConflict=false,lastClientWriteMs=0;
 const CLOUD_BASE_TOKEN_KEY='hwCheckerR8SandboxCloudBaseTokenV1';
 const CLOUD_DEVICE_ID_KEY='hwCheckerR8SandboxCloudDeviceIdV1';
 // Firestore 單一文件上限為 1 MiB。JSON 位元組數不是 Firestore 實際編碼大小，
@@ -3431,7 +3430,6 @@ function startListener(){
      const baseline=persistedBaseToken()||baseRemoteToken;
      if(token&&baseline&&token===baseline){
        setStatus('等待同步','雲端仍是上次同步版本；本機修改正在等待安全上傳。','wait');
-       if(navigator.onLine)queuePush();
        return;
      }
      enterSyncConflict();return
@@ -3520,9 +3518,6 @@ async function mergeNow(){
 }
 async function uploadNow(force=false){
  if(!currentUser||!docRef||applyingRemote)return;
- if(uploadInFlight){uploadQueuedAfterFlight=true;return false}
- uploadInFlight=true;
- try{
  if(!navigator.onLine){
    localStorage.setItem('hwCheckerR8SandboxCloudDirtyV1','1');
    setStatus('離線・待同步','目前沒有網路；資料已保存在這台裝置，恢復網路後再同步到雲端。','wait');
@@ -3539,8 +3534,7 @@ async function uploadNow(force=false){
    setButtons();
    return false;
  }
- const token=Math.max(Date.now(),lastClientWriteMs+1);lastClientWriteMs=token;
- const newToken=String(token)+'|'+DEVICE_ID;
+ const token=Math.max(Date.now(),lastClientWriteMs+1);lastClientWriteMs=token;const newToken=String(token)+'|'+DEVICE_ID;
  const docData={schema:1,state:payload,ownerUid:currentUser.uid,clientUpdatedAt:token,writer:DEVICE_ID,serverUpdatedAt:serverTimestamp()};
  pendingUploadToken=newToken;
  setStatus(sizeInfo.warn?'資料量偏大，正在同步':'正在同步',sizeInfo.warn
@@ -3576,13 +3570,6 @@ async function uploadNow(force=false){
   }
   throw err;
  }
- }finally{
-   uploadInFlight=false;
-   if(uploadQueuedAfterFlight){
-     uploadQueuedAfterFlight=false;
-     if(navigator.onLine&&!syncConflict&&bridge?.isDirty?.())setTimeout(()=>queuePush(),0);
-   }
- }
 }
 async function downloadNow(){
  if(!currentUser||!docRef)return;
@@ -3607,9 +3594,7 @@ function queuePush(){
  queueTimer=setTimeout(()=>uploadNow(false).catch(err=>{
    console.error('cloud upload failed',err);
    if(isLikelyNetworkError(err)){
-     localStorage.setItem(CLOUD_DIRTY_KEY,'1');
-     setStatus('等待網路','目前看起來是網路／Firebase 暫時無法連線；本機資料仍保留，恢復網路後會再嘗試同步。','wait');
-     if(navigator.onLine)setTimeout(()=>{if(bridge?.isDirty?.()&&!syncConflict)queuePush()},2500);
+     setStatus('等待網路','目前看起來是網路／Firebase 暫時無法連線；本機資料仍保留，恢復網路後會再嘗試同步。','err');
    }else if(isLikelySizeWriteError(err)){
      setStatus('雲端寫入容量錯誤','Firebase 回報資料量可能過大；本機資料仍保留。請先匯出 JSON 備份，再整理較舊歷史紀錄。','err');
    }else{

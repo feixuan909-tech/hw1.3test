@@ -1,4 +1,4 @@
-const CACHE='hw-checker-r8-sandbox-datalogicfix12-shell-v1';
+const CACHE='hw-checker-r8-sandbox-datalogicfix13-shell-v1';
 const scopeRoot=()=>new URL('./',self.registration.scope).href;
 const indexUrl=()=>new URL('./index.html',self.registration.scope).href;
 async function cacheShell(){
