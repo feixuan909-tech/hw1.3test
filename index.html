@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox UIFix25｜逐座號三方安全合併修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox ReturnSlip26｜回條第一階段修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -1024,9 +1024,12 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
  #studentPanel .student-quick-ok{margin-left:3px!important}
 }
 </style>
+<style id="return-slip26-css">
+body.return-slip-mode #homeworkStatusbar{outline:1px solid rgba(184,139,55,.12);outline-offset:3px}
+</style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox UIFix25</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox ReturnSlip26</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -1195,7 +1198,7 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
     <button id="historyCollapseBtn" class="btn history-collapse-btn" type="button" aria-expanded="true">收起 ▲</button>
   </div>
   <div id="historyBody">
-    <div class="small" style="margin:8px 0">按「編輯紀錄」會把該筆資料載入上方一般登記區，可用原本三種進度輸入方式與座號狀態按鈕修改；「補登 OK」則直接在歷史紀錄中批次處理。左右滑動時座號欄固定。</div>
+    <div id="historyUsageHint" class="small" style="margin:8px 0">按「編輯紀錄」會把該筆資料載入上方一般登記區，可用原本三種進度輸入方式與座號狀態按鈕修改；「補登 OK」則直接在歷史紀錄中批次處理。左右滑動時座號欄固定。</div>
     <div class="history-table-wrap"><div class="history-table-scroll"><table class="history-table"><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div></div>
   </div>
 </section>
@@ -1226,9 +1229,27 @@ const validDate=d=>{
  const dt=new Date(Date.UTC(y,mo-1,day));
  return dt.getUTCFullYear()===y&&dt.getUTCMonth()===mo-1&&dt.getUTCDate()===day;
 };
+const RETURN_SLIP_DEFAULT_LABELS={blue:'參加',red:'未交',green:'不參加',yellow:'參加（特殊情況）',ring:'補繳',orange:'請假'};
 function defaultCategoryMeta(name){
  const independent=['作文','閱讀單','回條','分享報告'].includes(name);
- return {kind:independent?'independent':'continuous',showOverview:name!=='回條'};
+ const workflow=name==='回條'?'returnSlip':'standard';
+ // ReturnSlip26 第一階段先不接入舊總覽 formatter，避免把回條轉成一般作業 OK 顯示。
+ return {kind:independent?'independent':'continuous',workflow,showOverview:name==='回條'?false:true};
+}
+function isReturnSlipCategory(catOrId){
+ const c=typeof catOrId==='object'&&catOrId?catOrId:state?.categories?.find(x=>String(x.id)===String(catOrId));
+ return !!c&&c.workflow==='returnSlip';
+}
+function isReturnSlipFinalStatus(status){return ['blue','green','yellow'].includes(status)}
+function isReturnSlipPendingStatus(status){return ['red','ring','orange'].includes(status)}
+function getReturnSlipLabel(status,category){
+ const labels=category?.returnSlipLabels&&typeof category.returnSlipLabels==='object'?category.returnSlipLabels:RETURN_SLIP_DEFAULT_LABELS;
+ return cleanText(labels?.[status]||RETURN_SLIP_DEFAULT_LABELS[status]||status,40);
+}
+function isReturnSlipRecordComplete(record){
+ if(!record||!isReturnSlipCategory(record.catId))return false;
+ for(let n=1;n<=state.studentCount;n++)if(!isReturnSlipFinalStatus(record.statuses?.[n]||'red'))return false;
+ return true;
 }
 function freshState(){return{studentCount:27,categories:DEFAULT_CATS.map((name,i)=>({id:'c'+i,name,...defaultCategoryMeta(name)})),currentCategory:'c0',drafts:{},history:[],contact:{date:refreshToday(),statuses:{},leave:[]},progress:{mode:'none',a:'',b:'',unit:'L',free:''}}}
 function sanitizeState(raw,keepDrafts=false){
@@ -1249,9 +1270,14 @@ function sanitizeState(raw,keepDrafts=false){
       let id=SAFE_ID.test(oldId)?oldId:'';
       while(!id||seenIds.has(id)){id=`c_import_${seq++}`;}
       const defaults=defaultCategoryMeta(name);
-      const kind=['continuous','independent'].includes(c.kind)?c.kind:defaults.kind;
+      const workflow=c.workflow==='returnSlip'?'returnSlip':defaults.workflow;
+      const kind=workflow==='returnSlip'?'independent':(['continuous','independent'].includes(c.kind)?c.kind:defaults.kind);
       const showOverview=typeof c.showOverview==='boolean'?c.showOverview:defaults.showOverview;
-      seenIds.add(id);seenNames.add(norm);cats.push({id,name,kind,showOverview});categoryIdMap.set(oldId,id);
+      const returnSlipLabels={...RETURN_SLIP_DEFAULT_LABELS};
+      if(c.returnSlipLabels&&typeof c.returnSlipLabels==='object'&&!Array.isArray(c.returnSlipLabels)){
+        for(const st of Object.keys(RETURN_SLIP_DEFAULT_LABELS)){const v=cleanText(c.returnSlipLabels[st],40);if(v)returnSlipLabels[st]=v}
+      }
+      seenIds.add(id);seenNames.add(norm);cats.push({id,name,kind,workflow,showOverview,returnSlipLabels});categoryIdMap.set(oldId,id);
     }
     if(cats.length)s.categories=cats;
   }
@@ -1290,7 +1316,11 @@ function sanitizeState(raw,keepDrafts=false){
         const n=Number(k);if(Number.isInteger(n)&&n>=1&&n<=60&&v===true)manualResolved[n]=true;
       }
       const catMeta=s.categories.find(c=>c.id===catId);
-      if(catMeta?.kind==='independent'&&!Object.keys(manualResolved).length){
+      if(catMeta?.workflow==='returnSlip'){
+        for(const k of Object.keys(resolved))delete resolved[k];
+        for(const k of Object.keys(resolvedParts))delete resolvedParts[k];
+        for(const k of Object.keys(manualResolved))delete manualResolved[k];
+      }else if(catMeta?.kind==='independent'&&!Object.keys(manualResolved).length){
         for(const [k,v] of Object.entries(resolved))if(v===true)manualResolved[k]=true;
       }
 
@@ -1457,7 +1487,7 @@ function compareHistory(a,b){
  return bc-ac||bi-ai;
 }
 function latestRecord(catId){return state.history.filter(h=>h.catId===catId).sort(compareHistory)[0]||null}
-function recordHasPending(h){if(!h)return false;for(let n=1;n<=state.studentCount;n++){const st=h.statuses[n];if(['red','yellow','green','ring'].includes(st)&&!h.resolved?.[n])return true}return false}
+function recordHasPending(h){if(!h)return false;if(isReturnSlipCategory(h.catId)){for(let n=1;n<=state.studentCount;n++)if(isReturnSlipPendingStatus(h.statuses?.[n]||'red'))return true;return false}for(let n=1;n<=state.studentCount;n++){const st=h.statuses[n];if(['red','yellow','green','ring'].includes(st)&&!h.resolved?.[n])return true}return false}
 function fmtDate(d){if(!d)return'';const[,m,day]=d.split('-');return`${Number(m)}/${Number(day)}`}
 
 const MOBILE_UX_MAX=600;
@@ -1499,7 +1529,17 @@ function setupMobileTopbar(){
    menu.classList.remove('show');more.textContent='更多 ▾';more.setAttribute('aria-expanded','false');
  }
 }
-function renderAll(){refreshToday();$('studentCount').value=state.studentCount;if(!$('recordDate').value)$('recordDate').value=TODAY;if(selectedStudentSeat>state.studentCount)selectedStudentSeat=state.studentCount;renderCats();updateMobileCategoryUI();renderProgress();renderHistoryMainEditBanner();renderContact();renderStudentGrid();renderOverview();renderStudentRecord();renderTable();renderCurrentCategorySummary()}
+function syncHomeworkStatusbarForCategory(){
+ const c=currentCat(),isSlip=isReturnSlipCategory(c);document.body.classList.toggle('return-slip-mode',isSlip);
+ const labels=isSlip?RETURN_SLIP_DEFAULT_LABELS:{blue:'通過',red:'未交／未寫',green:'未簽',ring:'未訂簽',yellow:'未訂正',orange:'請假'};
+ document.querySelectorAll('.homework-status-btn').forEach(btn=>{
+   const st=btn.dataset.status;if(labels[st])btn.innerHTML=`<span class="dot ${st}"></span>${esc(isSlip?getReturnSlipLabel(st,c):labels[st])}`;
+ });
+ const all=$('markAllPassBtn');if(all)all.textContent=isSlip?'全部完成':'全部通過';
+ const opt=$('excludeLeaveOnAllPass')?.closest('.exclude-leave-option');if(opt)opt.style.display=isSlip?'none':'';
+ const hint=$('historyUsageHint');if(hint)hint.textContent=isSlip?'回條每一筆都是獨立正式紀錄；點欄位可查看該筆繳交情形，按「編輯紀錄」可直接修改實際結果。回條不使用補登 OK。左右滑動時座號欄固定。':'按「編輯紀錄」會把該筆資料載入上方一般登記區，可用原本三種進度輸入方式與座號狀態按鈕修改；「補登 OK」則直接在歷史紀錄中批次處理。左右滑動時座號欄固定。';
+}
+function renderAll(){refreshToday();$('studentCount').value=state.studentCount;syncHomeworkStatusbarForCategory();if(!$('recordDate').value)$('recordDate').value=TODAY;if(selectedStudentSeat>state.studentCount)selectedStudentSeat=state.studentCount;renderCats();updateMobileCategoryUI();renderProgress();renderHistoryMainEditBanner();renderContact();renderStudentGrid();renderOverview();renderStudentRecord();renderTable();renderCurrentCategorySummary()}
 let categoryEditMode=false;
 let selectedStudentSeat=1;
 let studentRecordSortMode='category';
@@ -1533,7 +1573,10 @@ function renderCats(){
      const name=document.createElement('span');name.className='cat-name';name.textContent=c.name;
      const date=document.createElement('span');date.className=`cat-date ${recordHasPending(h)?'pending':''}`;date.textContent=h?fmtDate(h.date):'';
      btn.appendChild(name);
-     if(c.kind==='independent'){
+     if(isReturnSlipCategory(c)){
+       const badge=document.createElement('span');badge.className='independent-badge';badge.textContent='回';
+       badge.title='回條｜獨立紀錄';badge.setAttribute('aria-label','回條類別');btn.appendChild(badge);
+     }else if(c.kind==='independent'){
        const badge=document.createElement('span');badge.className='independent-badge';badge.textContent='獨';
        badge.title='獨立項目';badge.setAttribute('aria-label','獨立項目');
        btn.appendChild(badge);
@@ -1633,7 +1676,8 @@ function renderCats(){
    const kind=document.createElement('select');kind.className='cat-kind-select';kind.dataset.catId=c.id;
    const opContinuous=document.createElement('option');opContinuous.value='continuous';opContinuous.textContent='連續作業';
    const opIndependent=document.createElement('option');opIndependent.value='independent';opIndependent.textContent='獨立項目';
-   kind.append(opContinuous,opIndependent);kind.value=c.kind==='independent'?'independent':'continuous';
+   const opReturnSlip=document.createElement('option');opReturnSlip.value='returnSlip';opReturnSlip.textContent='回條';
+   kind.append(opContinuous,opIndependent,opReturnSlip);kind.value=isReturnSlipCategory(c)?'returnSlip':(c.kind==='independent'?'independent':'continuous');
    kind.setAttribute('aria-label',`${c.name} 類型`);
    kind.addEventListener('pointerdown',()=>row.draggable=false);kind.addEventListener('blur',()=>row.draggable=true);
 
@@ -1650,7 +1694,7 @@ function renderCats(){
  });
 
  const hint=document.createElement('div');hint.className='small';hint.style.gridColumn='1/-1';
- hint.textContent='☰ 拖曳到欄位上、下邊緣會自動捲動；連續作業會追蹤前次未完成，獨立項目則每一筆各自計算。';
+ hint.textContent='☰ 拖曳到欄位上、下邊緣會自動捲動；連續作業會追蹤前次未完成；獨立項目與回條每一筆各自計算。回條不使用補登 OK。';
  box.appendChild(hint);
 
  const addRow=document.createElement('div');addRow.className='cat-add-item';
@@ -1832,8 +1876,11 @@ function saveCategoryChanges(closeAfter=false){
      c.name=item.name;
      const kindEl=document.querySelector(`.cat-kind-select[data-cat-id="${CSS.escape(String(item.id))}"]`);
      const overviewEl=document.querySelector(`.category-overview-edit[data-cat-id="${CSS.escape(String(item.id))}"]`);
-     c.kind=kindEl?.value==='independent'?'independent':'continuous';
-     c.showOverview=overviewEl?overviewEl.checked:true;
+     const kindValue=kindEl?.value||'continuous';
+     c.workflow=kindValue==='returnSlip'?'returnSlip':'standard';
+     c.kind=(kindValue==='independent'||kindValue==='returnSlip')?'independent':'continuous';
+     if(c.workflow==='returnSlip'){c.returnSlipLabels={...(c.returnSlipLabels||RETURN_SLIP_DEFAULT_LABELS)};c.showOverview=false}
+     else c.showOverview=overviewEl?overviewEl.checked:true;
    }
  }
  save();
@@ -2006,6 +2053,7 @@ function clearCurrentDraft(){
 }
 function markAllPass(){
  const d=getDraft();
+ if(isReturnSlipCategory(currentCat())){for(let n=1;n<=state.studentCount;n++)d[n]='blue';save();selectedStudents.clear();renderStudentGrid();return}
  const excludeLeave=!!$('excludeLeaveOnAllPass')?.checked;
  const leave=todayLeaveSet();
  const isToday=($('recordDate').value||TODAY)===TODAY;
@@ -2028,6 +2076,7 @@ function resolvedPartState(h,n){
  return {missing:!!p.missing,correction:!!p.correction,signature:!!p.signature};
 }
 function isStatusFullyResolved(h,n){
+ if(isReturnSlipCategory(h?.catId))return false;
  const st=h.statuses[n],p=resolvedPartState(h,n);
  if(st==='red')return p.missing;
  if(st==='yellow')return p.correction;
@@ -2123,16 +2172,16 @@ function commitHomeworkRecord(c,date,content,progressType,d,mode='new',existingI
  const rec={
    id:mode==='overwrite'&&existing?existing.id:'h_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),
    catId:c.id,date,content,progressType,statuses:d,
-   resolved:mode==='overwrite'&&existing?(existing.resolved||{}):{},
-   resolvedParts:mode==='overwrite'&&existing?(existing.resolvedParts||{}):{},
-   manualResolved:mode==='overwrite'&&existing?(existing.manualResolved||{}):{},
+   resolved:isReturnSlipCategory(c)?{}:(mode==='overwrite'&&existing?(existing.resolved||{}):{}),
+   resolvedParts:isReturnSlipCategory(c)?{}:(mode==='overwrite'&&existing?(existing.resolvedParts||{}):{}),
+   manualResolved:isReturnSlipCategory(c)?{}:(mode==='overwrite'&&existing?(existing.manualResolved||{}):{}),
    createdAt:mode==='overwrite'&&existing?(Number(existing.createdAt)||historyCreationStamp(existing,existingIndex)):Date.now(),
    updated:nextUpdatedStamp()
  };
  if(mode==='overwrite'&&existingIndex>=0)state.history[existingIndex]=rec;
  else state.history.push(rec);
 
- resolvePrevious(c.id,rec);
+ if(!isReturnSlipCategory(c))resolvePrevious(c.id,rec);
  delete state.drafts[draftKey()];
  save();selectedStudents.clear();renderSummary(rec);renderAll();
 }
@@ -2178,22 +2227,21 @@ function updateHomework(){
  commitHomeworkRecord(c,date,content,progressType,d,'new',-1);
 }
 function summaryStatusGroups(rec){
- const groups={orange:[],red:[],green:[],ring:[],yellow:[]};
+ const slip=isReturnSlipCategory(rec?.catId);
+ const groups=slip?{blue:[],red:[],green:[],yellow:[],ring:[],orange:[]}:{orange:[],red:[],green:[],ring:[],yellow:[]};
  for(let n=1;n<=state.studentCount;n++){
-   // 上方「目前繳交情況」顯示的是仍待處理的人；
-   // 歷史紀錄已補登 OK（或連續作業已自動判定完成）者，不應再留在原狀態名單中。
-   if(isStatusFullyResolved(rec,n))continue;
-   const st=rec.statuses?.[n];
-   if(groups[st])groups[st].push(n);
+   if(!slip&&isStatusFullyResolved(rec,n))continue;
+   const st=rec.statuses?.[n]||'red';if(groups[st])groups[st].push(n);
  }
  return groups;
 }
 let independentSummaryViewId='';
 function renderSummary(rec){
- const groups=summaryStatusGroups(rec);
- const labels={orange:['請假','orange'],red:['未交／未寫','red'],green:['未簽','green'],ring:['未訂簽','ring'],yellow:['未訂正','yellow']};
- const lines=Object.entries(groups).filter(([,v])=>v.length).map(([k,v])=>`<div class="summary-line"><span class="dot ${labels[k][1]}"></span><b>${labels[k][0]}：</b>${v.join('、')}</div>`).join('');
- $('dailySummary').innerHTML=`<div class="current-status-heading"><h4 style="margin:0">${esc(currentCat().name)}｜${rec.content?esc(rec.content)+'｜':''}${rec.date}</h4><span class="small">目前繳交情況</span></div>${lines||'<div class="small" style="margin-top:6px">目前沒有需要追蹤的狀態。</div>'}`;
+ const groups=summaryStatusGroups(rec),c=state.categories.find(x=>x.id===rec?.catId)||currentCat(),slip=isReturnSlipCategory(c);
+ const labels=slip?Object.fromEntries(Object.keys(RETURN_SLIP_DEFAULT_LABELS).map(st=>[st,[getReturnSlipLabel(st,c),st]])):{orange:['請假','orange'],red:['未交／未寫','red'],green:['未簽','green'],ring:['未訂簽','ring'],yellow:['未訂正','yellow']};
+ const lines=Object.entries(groups).filter(([,v])=>v.length).map(([k,v])=>`<div class="summary-line"><span class="dot ${labels[k][1]}"></span><b>${esc(labels[k][0])}：</b>${v.join('、')}</div>`).join('');
+ const tail=slip?(isReturnSlipRecordComplete(rec)?'<div class="small" style="margin-top:7px">✓ 此筆回條已全部完成。</div>':'<div class="small" style="margin-top:7px">仍有未交／補繳／請假者，此筆尚未全部完成。</div>'):'';
+ $('dailySummary').innerHTML=`<div class="current-status-heading"><h4 style="margin:0">${esc(c.name)}｜${rec.content?esc(rec.content)+'｜':''}${rec.date}</h4><span class="small">目前繳交情況</span></div>${lines||'<div class="small" style="margin-top:6px">目前沒有需要追蹤的狀態。</div>'}${tail}`;
  $('dailySummary').classList.remove('hidden');
 }
 function renderCurrentCategorySummary(){
@@ -2215,6 +2263,11 @@ function statusIcon(st,resolved=false,parts=null){
  }
  return `<span class="cell-mark ${st}"></span>`;
 }
+function historyStatusIcon(h,seat){
+ const st=h?.statuses?.[seat]||'red';
+ if(isReturnSlipCategory(h?.catId))return `<span class="cell-mark ${st}" title="${esc(getReturnSlipLabel(st,state.categories.find(c=>c.id===h.catId)))}"></span>`;
+ return statusIcon(st,previewManualHistoryOK(h,seat),previewManualHistoryParts(h,seat));
+}
 function progressHTML(h){
  if(!h.content)return'<span class="small">—</span>';
  const m=h.content.match(/^P\.(\d+)～P\.(\d+)$/);
@@ -2229,7 +2282,7 @@ function toggleOverview(force){
  btn.textContent=show?'收起總覽':'作業最新進度總覽';
  if(show){renderOverview();panel.scrollIntoView({behavior:'smooth',block:'start'})}
 }
-function isWholeClassOK(h){if(!h)return false;for(let n=1;n<=state.studentCount;n++){const st=h.statuses?.[n]||'red';if(st!=='blue'&&!isStatusFullyResolved(h,n))return false}return true}
+function isWholeClassOK(h){if(!h)return false;if(isReturnSlipCategory(h.catId))return isReturnSlipRecordComplete(h);for(let n=1;n<=state.studentCount;n++){const st=h.statuses?.[n]||'red';if(st!=='blue'&&!isStatusFullyResolved(h,n))return false}return true}
 function hasUnresolvedIndependentRecord(h){
  if(!h)return false;
  for(let n=1;n<=state.studentCount;n++){
@@ -2858,7 +2911,8 @@ function saveHistoryRecordFromMain(){
    }
  }
  h.updated=nextUpdatedStamp();
- if(c?.kind==='continuous')recomputeContinuousResolutions(h.catId);
+ if(isReturnSlipCategory(c)){h.resolved={};h.resolvedParts={};h.manualResolved={}}
+ else if(c?.kind==='continuous')recomputeContinuousResolutions(h.catId);
  else{
    h.resolved={};h.resolvedParts={};
    for(const seat of Object.keys(h.manualResolved)){h.resolved[seat]=true;h.resolvedParts[seat]={missing:true,correction:true,signature:true}}
@@ -2905,7 +2959,7 @@ function renderTable(){
    recordEdit.disabled=false;
    recordEdit.addEventListener('click',()=>{if(historyEditId===h.id)cancelHistoryRecordEdit();else startHistoryRecordEdit(h.id)});
    controls.appendChild(recordEdit);
-   {
+   if(!isReturnSlipCategory(c)){
      const okEdit=document.createElement('button');
      okEdit.type='button';okEdit.className=`btn history-ok-edit-btn ${historyOkEditId===h.id?'active':''} ${historyOkEditId===h.id&&historyOkPending.size?'has-pending':''}`;
      okEdit.style.cssText='padding:4px 7px;font-size:11px';
@@ -2935,12 +2989,12 @@ function renderTable(){
    let cells='';
    for(let i=0;i<cols.length;i++){
      const h=cols[i],latest=i===0?'latest-col':'';
-     if(isWholeClassOK(h)){if(n===1)cells+=`<td class="${latest} all-ok-cell" rowspan="${state.studentCount}"><span class="all-ok-stamp">OK</span></td>`}
+     if(!isReturnSlipCategory(c)&&isWholeClassOK(h)){if(n===1)cells+=`<td class="${latest} all-ok-cell" rowspan="${state.studentCount}"><span class="all-ok-stamp">OK</span></td>`}
      else{
        const st=h.statuses[n]||'red';
-       const editable=historyOkEditId===h.id&&['red','yellow','green','ring','orange'].includes(st);
+       const editable=!isReturnSlipCategory(c)&&historyOkEditId===h.id&&['red','yellow','green','ring','orange'].includes(st);
        const pending=editable&&historyOkPending.has(n);
-       cells+=`<td class="${latest} ${editable?'ok-editable':''} ${pending?'pending-toggle':''}"${editable?` data-history-id="${esc(h.id)}" data-seat="${n}"`:''}>${statusIcon(st,previewManualHistoryOK(h,n),previewManualHistoryParts(h,n))}</td>`;
+       cells+=`<td class="${latest} ${editable?'ok-editable':''} ${pending?'pending-toggle':''}"${editable?` data-history-id="${esc(h.id)}" data-seat="${n}"`:''}>${historyStatusIcon(h,n)}</td>`;
      }
    }
    rows+=`<tr><td>${n}</td>${cells}</tr>`;
