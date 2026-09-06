@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix2｜連續邏輯修正版</title>
+<title>作業點名簿＋ v1.0 Enhanced r8 Sandbox DataLogicFix3｜連續補OK與版面修正版</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--line:#dfe5ea;--text:#2f3b46;--muted:#8794a1;--blue:#4da3ff;--red:#ef5350;--yellow:#f6c945;--green:#59bf76;--orange:#f79a49}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
@@ -970,10 +970,36 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
  .history-record-controls{flex-direction:column!important;align-items:center!important;gap:3px!important}
  .history-record-controls .btn{width:auto!important;min-width:72px!important}
 }
+
+/* DataLogicFix3：固定表頭模式縮短整體高度，不再佔據過大的畫面空間。 */
+#overviewPanel.overview-sticky-mode .overview-table-wrap{
+  height:min(44vh,380px)!important;
+}
+#overviewPanel.overview-sticky-mode .overview-scroll-tail{
+  height:calc(100% - 145px)!important;
+  min-height:150px!important;
+  max-height:245px!important;
+}
+/* 歷史狀態圓點改用區塊 flex 本身置中，避免 inline-flex 基線造成上下偏移。 */
+.history-table td .cell-mark{
+  display:flex!important;
+  margin:0 auto!important;
+  vertical-align:initial!important;
+}
+@media(max-width:760px){
+  #overviewPanel.overview-sticky-mode .overview-table-wrap{
+    height:min(42vh,320px)!important;
+  }
+  #overviewPanel.overview-sticky-mode .overview-scroll-tail{
+    height:calc(100% - 130px)!important;
+    min-height:135px!important;
+    max-height:210px!important;
+  }
+}
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix2</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox DataLogicFix3</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
@@ -1952,6 +1978,19 @@ function isStatusFullyResolved(h,n){
  if(st==='orange')return p.missing;
  return false;
 }
+function historyCreationStamp(h,index=0){
+ // 同一天的先後順序必須依「建立時刻」，不能依 updated；編輯舊紀錄會改 updated，
+ // 若拿 updated 排序，就可能把舊進度誤當成較新的進度，破壞連續作業補 OK 邏輯。
+ const id=String(h?.id||'');
+ let m=id.match(/^h_([0-9a-z]+)_/i);
+ if(m){const t=parseInt(m[1],36);if(Number.isFinite(t))return t;}
+ m=id.match(/^h_import_(\d+)_/i);
+ if(m){const t=Number(m[1]);if(Number.isFinite(t))return t;}
+ const explicit=Number(h?.createdAt);
+ if(Number.isFinite(explicit)&&explicit>0)return explicit;
+ const fallback=Number(h?.updated);
+ return Number.isFinite(fallback)?fallback:index;
+}
 function continuousChronological(catId){
  const indexed=state.history
    .map((h,index)=>({h,index}))
@@ -1959,8 +1998,8 @@ function continuousChronological(catId){
  indexed.sort((a,b)=>{
    const d=String(a.h.date).localeCompare(String(b.h.date));
    if(d)return d;
-   const u=(Number(a.h.updated)||0)-(Number(b.h.updated)||0);
-   if(u)return u;
+   const c=historyCreationStamp(a.h,a.index)-historyCreationStamp(b.h,b.index);
+   if(c)return c;
    return a.index-b.index;
  });
  return indexed.map(x=>x.h);
@@ -1968,8 +2007,11 @@ function continuousChronological(catId){
 function applyContinuousResolution(current,earlier){
  for(let n=1;n<=state.studentCount;n++){
    const now=current.statuses?.[n];
+   // 最新一筆若本身是藍色通過，或老師已明確對這一筆補登 OK，
+   // 都代表此學生已完成到這個進度，因此更早的欠件應保留原狀態並自動補上 OK。
+   const currentCompleted=(now==='blue'||current.manualResolved?.[n]===true);
 
-   if(now==='blue'){
+   if(currentCompleted){
      for(const h of earlier){
        const prev=h.statuses?.[n];
        if(!['red','yellow','green','ring','orange'].includes(prev))continue;
