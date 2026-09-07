@@ -1120,6 +1120,28 @@ body.return-slip-mode #homeworkStatusbar{outline:1px solid rgba(184,139,55,.12);
   .homework-entry-progress .direct-progress{grid-template-columns:1fr!important}
   .homework-entry-progress .direct-progress>.progress-label{margin-top:4px!important}
 }
+
+/* ReturnSlip32：僅在「跳頁」展開且卡片進入中間寬度時，讓進度模式提早分列。
+   避免跳頁輸入框與下一個「單元」欄位互相重疊；未展開跳頁時維持 R31 版面。 */
+@container homework-entry-card (max-width: 1450px){
+  .homework-entry-progress .direct-progress:has(.skip-pages-wrap.show){
+    grid-template-columns:auto minmax(0,1fr)!important;
+  }
+  .homework-entry-progress .direct-progress:has(.skip-pages-wrap.show)>.page-inline{
+    flex-wrap:wrap!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+  .homework-entry-progress .direct-progress:has(.skip-pages-wrap.show)>.page-inline .skip-pages-wrap.show{
+    flex:1 1 100%!important;
+    width:100%!important;
+    min-width:0!important;
+  }
+  .homework-entry-progress .direct-progress:has(.skip-pages-wrap.show)>.page-inline .skip-pages-wrap.show .input{
+    width:100%!important;
+    min-width:0!important;
+  }
+}
 </style>
 </head>
 <body>
