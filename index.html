@@ -1160,17 +1160,42 @@ body.return-slip-mode #homeworkStatusbar{outline:1px solid rgba(184,139,55,.12);
   }
 }
 
-/* ReturnSlip36：只調整「跳頁未展開且仍在同一橫列」的單元位置。
-   跳頁展開後完全沿用 ReturnSlip33 的位置與換列規則。 */
+/* ReturnSlip37：未展開時「單元」標籤與輸入組同步右移；跳頁展開時，卡片夠寬就維持同列。 */
 @container homework-entry-card (min-width: 901px){
+  .homework-entry-progress .direct-progress:not(:has(.skip-pages-wrap.show))>.progress-label:has(+ .unit-inline),
   .homework-entry-progress .direct-progress:not(:has(.skip-pages-wrap.show))>.unit-inline{
-    margin-left:110px!important;
+    transform:translateX(96px)!important;
+    margin-left:0!important;
+  }
+}
+@container homework-entry-card (min-width: 1040px){
+  .homework-entry-progress .direct-progress:has(.skip-pages-wrap.show){
+    grid-template-columns:auto minmax(0,1fr) auto max-content!important;
+    column-gap:10px!important;
+  }
+  .homework-entry-progress .direct-progress:has(.skip-pages-wrap.show)>.page-inline{
+    flex-wrap:nowrap!important;
+    width:auto!important;
+    max-width:none!important;
+  }
+  .homework-entry-progress .direct-progress:has(.skip-pages-wrap.show)>.page-inline .skip-pages-wrap.show{
+    flex:0 1 190px!important;
+    width:190px!important;
+    min-width:150px!important;
+    max-width:190px!important;
+  }
+  .homework-entry-progress .direct-progress:has(.skip-pages-wrap.show)>.unit-inline{
+    width:max-content!important;
+    max-width:100%!important;
+    flex-wrap:nowrap!important;
+    margin-left:0!important;
+    transform:none!important;
   }
 }
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox ReturnSlip36</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
+<header class="topbar"><div class="brand-wrap"><div class="brand-block"><div class="brand">作業點名簿<span class="brand-plus">＋</span></div><div class="brand-version">v1.0 Enhanced r8 Sandbox ReturnSlip37</div></div></div><button id="exportBtn" class="btn" type="button">匯出備份</button><label class="btn import-label">匯入備份<input id="importFile" type="file" accept=".json,application/json" hidden></label><button id="cloudToggleBtn" class="btn cloud-status-btn" type="button"><span id="cloudDot" class="cloud-dot"></span><span id="cloudStatusShort">雲端未設定</span></button><button id="studentToggleBtn" class="btn" type="button">學生個人紀錄</button><button id="overviewToggleBtn" class="btn primary" type="button">作業最新進度總覽</button><button id="mobileMoreBtn" class="btn mobile-only" type="button" aria-expanded="false">更多 ▾</button><div id="mobileMoreMenu"></div></header>
 <div id="sandboxNotice" style="margin:10px auto 0;max-width:1180px;padding:8px 12px;border:1px solid #d5a72c;border-radius:10px;background:#fff8dc;color:#6b5314;font-size:13px;font-weight:700;box-sizing:border-box">🧪 r8 Sandbox 測試資料隔離模式｜不讀寫正式版 localStorage／Firestore 文件</div>
 <section id="cloudPanel" class="cloud-panel" aria-hidden="true">
   <div class="cloud-panel-head">
