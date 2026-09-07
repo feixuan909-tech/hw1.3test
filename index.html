@@ -1074,6 +1074,52 @@ html.mobile-ux .cat-edit-item.drag-over-after{border-bottom:5px solid #2f9edb!im
 </style>
 <style id="return-slip26-css">
 body.return-slip-mode #homeworkStatusbar{outline:1px solid rgba(184,139,55,.12);outline-offset:3px}
+
+/* ReturnSlip31：改以「作業登記卡片實際寬度」判斷換列，避免側欄存在時 viewport 足夠但內容區已擠壓。 */
+#homeworkEntrySection{container-type:inline-size;container-name:homework-entry-card}
+@container homework-entry-card (max-width: 900px){
+  .homework-entry-progress{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    align-items:flex-end!important;
+    gap:10px 12px!important;
+  }
+  .homework-entry-progress>.field.grow{
+    flex:1 1 100%!important;
+    width:100%!important;
+    min-width:0!important;
+  }
+  .homework-entry-progress>.field:not(.grow){
+    flex:0 0 auto!important;
+    margin-left:auto!important;
+  }
+  .homework-entry-progress .direct-progress{
+    width:100%!important;
+    min-width:0!important;
+    grid-template-columns:auto minmax(0,1fr)!important;
+    column-gap:10px!important;
+    row-gap:10px!important;
+  }
+  .homework-entry-progress .direct-progress>.progress-label{
+    align-self:center!important;
+  }
+  .homework-entry-progress .direct-progress>.progress-mode-group{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+  .homework-entry-progress .direct-progress>.page-inline{
+    flex-wrap:wrap!important;
+  }
+  .homework-entry-progress .direct-progress>.unit-inline{
+    width:100%!important;
+    max-width:100%!important;
+    flex-wrap:wrap!important;
+  }
+}
+@container homework-entry-card (max-width: 680px){
+  .homework-entry-progress .direct-progress{grid-template-columns:1fr!important}
+  .homework-entry-progress .direct-progress>.progress-label{margin-top:4px!important}
+}
 </style>
 </head>
 <body>
